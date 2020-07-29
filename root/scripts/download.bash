@@ -95,7 +95,6 @@ CacheEngine () {
 	MBArtistID=($(echo "${wantit}" | jq -r ".[].foreignArtistId"))
 
 	if [ -d "/config/temp" ]; then
-		sleep 0.1
 		rm -rf "/config/temp"
 	fi
 	for id in ${!MBArtistID[@]}; do
@@ -103,8 +102,16 @@ CacheEngine () {
 		mbid="${MBArtistID[$id]}"
         LidArtistNameCap="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .artistName")"
         sanatizedartistname="$(echo "${LidArtistNameCap}" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/')"
-        mbrainzurlcount=$(curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/artist/$mbid?inc=url-rels&fmt=json" | jq -r ".relations | .[] | .url | .resource" | wc -l)
 
+		if [ -f "/config/cache/$sanatizedartistname-$mbid-cache-complete" ]; then
+			if ! [[ $(find "/config/cache/$sanatizedartistname-$mbid-cache-complete" -mtime +7 -print) ]]; then
+				echo "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Skipping until cache expires..."
+				continue
+			fi
+		fi
+
+        mbrainzurlcount=$(curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/artist/$mbid?inc=url-rels&fmt=json" | jq -r ".relations | .[] | .url | .resource" | wc -l)
+	
 		if [ -f "/config/cache/$sanatizedartistname-$mbid-info.json" ]; then
 			cachedurlcount=$(cat "/config/cache/$sanatizedartistname-$mbid-info.json" | jq -r ".relations | .[] | .url | .resource" | wc -l)
 			if [ "$mbrainzurlcount" -ne "$cachedurlcount" ]; then
@@ -275,7 +282,7 @@ CacheEngine () {
 				cachedimvdbcount="0"
 			fi
 
-			echo "$imvdbarurllistcount -ne $cachedimvdbcount"
+			# echo "$imvdbarurllistcount -ne $cachedimvdbcount"
 
 			if [ $imvdbarurllistcount -ne $cachedimvdbcount ]; then
 				echo "$artistnumber of $wantedtotal :: IMVDB CACHE :: $LidArtistNameCap :: Cache out of date"
@@ -311,6 +318,7 @@ CacheEngine () {
 				fi
 			fi
 		fi
+		touch "/config/cache/$sanatizedartistname-$mbid-cache-complete"
     done
 }
 
@@ -339,12 +347,23 @@ DownloadVideos () {
 		artistnumber=$(( $id + 1 ))
 		mbid="${MBArtistID[$id]}"
 
+
+
 		LidArtistPath="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .path")"
 		LidArtistNameCap="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .artistName")"
 		sanatizedartistname="$(echo "${LidArtistNameCap}" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/')"
 		recordingsfile="$(cat "/config/cache/$sanatizedartistname-$mbid-recordings.json")"
 		mbzartistinfo="$(cat "/config/cache/$sanatizedartistname-$mbid-info.json")"
 		releasesfile="$(cat "/config/cache/$sanatizedartistname-$mbid-releases.json")"
+		
+
+		if [ -f "/config/cache/$sanatizedartistname-$mbid-download-complete" ]; then
+			if ! [[ $(find "/config/cache/$sanatizedartistname-$mbid-download-complete" -mtime +7 -print) ]]; then
+				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Artist already processed previously, skipping until cache expires..."
+				continue
+			fi
+		fi
+
 		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Processing"
 		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Normalizing MBZDB Release Info (Capitalization)"
 		releasesfilelowercase="$(echo ${releasesfile,,})"
@@ -439,6 +458,8 @@ DownloadVideos () {
 			if [ ! -z "$imvdburl" ]; then
 				downloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mp4" | wc -l)
 				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
+				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
+				touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
 			fi
 			continue
 		fi
@@ -453,6 +474,8 @@ DownloadVideos () {
 			if [ ! -z "$imvdburl" ]; then
 				downloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mp4" | wc -l)
 				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
+				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
+				touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
 			fi
 			continue
 		fi
@@ -533,6 +556,8 @@ DownloadVideos () {
 		done
 		downloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mp4" | wc -l)
 		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
+		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
+		touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
 	done
 	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "*.mp4" | wc -l)
 	echo "######################################### $totaldownloadcount VIDEOS DOWNLOADED #########################################"
@@ -617,6 +642,7 @@ VideoMatch () {
 	filter="false"
 	skip="false"
 	releaseid=""
+	videotitlelowercase="$(echo $videotitlelowercase | sed 's/"/\\"/g')"
 	# album match first...
 	# Preferred Country
 	if [ -z "$releaseid" ]; then
