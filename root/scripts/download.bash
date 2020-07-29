@@ -1,6 +1,15 @@
 #!/usr/bin/with-contenv bash
 agent="automated-music-video-downloader ( https://github.com/RandomNinjaAtk/docker-amvd )"
 Configuration () {
+	processstartid="$(pgrep -f /config/scripts/start.bash)"
+	processdownloadid="$(pgrep -f /config/scripts/download.bash)"
+	echo "To kill script, use the following command:"
+	echo "kill -9 $processstartid"
+	echo "kill -9 $processdownloadid"
+	echo ""
+	echo ""
+	sleep 5
+
 	echo "######################################### CONFIGURATION VERIFICATION #########################################"
 	error=0
 	
@@ -86,6 +95,7 @@ Configuration () {
 		echo "Exiting..."
 		exit 1
 	fi
+	sleep 5
 }
 
 CacheEngine () {
