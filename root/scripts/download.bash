@@ -39,7 +39,7 @@ Configuration () {
 
 	# verify LIBRARY
 	if [ ! -z "$LIBRARY" ]; then
-		echo "Music Video Library Location: $LIBRARY"
+		echo "Video: Download Path: $LIBRARY"
 	else
 		echo "ERROR: LIBRARY setting invalid, currently set to: $LIBRARY"
 		echo "ERROR: LIBRARY Expected Valid Setting: /your/path/to/music/video/folder"
@@ -54,7 +54,7 @@ Configuration () {
 
 	# Country Code
 	if [ ! -z "$CountryCode" ]; then
-		echo "Music Video Country Code: $CountryCode"
+		echo "Video: Country Code: $CountryCode"
 	else
 		echo "ERROR: CountryCode is empty, please configure wtih a valid Country Code (lowercase)"
 		error=1
@@ -62,38 +62,32 @@ Configuration () {
 
 	# RequireVideoMatch
 	if [ "$RequireVideoMatch" = "true" ]; then
-		echo "Music Video Require Match: ENABLED"
+		echo "Video: Require Video Match: ENABLED"
 	else
-		echo "Music Video Require Match: DISABLED"
+		echo "Video: Require Video Match: DISABLED"
 	fi
 		
 	# videoformat
 	if [ ! -z "$videoformat" ]; then
-		echo "Music Video Format Set To: $videoformat"
+		echo "Video: Format Set To: $videoformat"
 	else
-		echo "Music Video Format Set To: --format bestvideo[vcodec*=avc1]+bestaudio[ext=m4a]"
+		echo "Video: Format Set To: --format bestvideo[vcodec*=avc1]+bestaudio[ext=m4a]"
 	fi
 		
 	# videofilter
 	if [ ! -z "$videofilter" ]; then
-		echo "Music Video Filter: ENABLED ($videofilter)"
+		echo "Video: Filter: ENABLED ($videofilter)"
 	else
-		echo "Music Video Filter: DISABLED"
+		echo "Video: Filter: DISABLED"
 	fi
 		
 	# subtitlelanguage
 	if [ ! -z "$subtitlelanguage" ]; then
 		subtitlelanguage="${subtitlelanguage,,}"
-		echo "Music Video Subtitle Language: $subtitlelanguage"
+		echo "Video: Subtitle Language: $subtitlelanguage"
 	else
 		subtitlelanguage="en"
-		echo "Music Video Subtitle Language: $subtitlelanguage"
-	fi
-	
-	if [ "WriteNFOs" == "true" ]; then
-		echo "Music Video NFO Writer: ENABLED"
-	else
-		echo "Music Video NFO Writer: DISABLED"	
+		echo "Video: Subtitle Language: $subtitlelanguage"
 	fi
 
 	if [ $error = 1 ]; then
@@ -455,10 +449,10 @@ DownloadVideos () {
 
 			done
 		else
-			if ! [ -f "imvdberror.log" ]; then
-				touch "imvdberror.log"
+			if ! [ -f "/config/logs/imvdberror.log" ]; then
+				touch "/config/logs/imvdberror.log"
 			fi
-			if [ -f "imvdberror.log" ]; then
+			if [ -f "/config/logs/imvdberror.log" ]; then
 				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MBZDB :: ERROR :: musicbrainz id: $mbid is missing IMVDB link, see: \"/config/logs/imvdberror.log\" for more detail..."
 				if cat "/config/logs/imvdberror.log" | grep "$mbid" | read; then
 					sleep 0.1
@@ -747,13 +741,14 @@ VideoMatch () {
 			releasetitle="$(echo "$releasedata" | jq -r ".title")"
 			releasestatus="$(echo "$releasedata" | jq -r ".status")"
 			releasecountry="$(echo "$releasedata" | jq -r ".country")"
+			releaselanguage="$(echo "$releasedata" | jq -r '."text-representation".language')"
 			releasegrouptitle="$(echo "$releasedata" | jq -r '."release-group"."title"')"
 			releasegroupdate="$(echo "$releasedata" | jq -r '."release-group"."first-release-date"')"
 			releasegroupyear="$(echo ${releasegroupdate:0:4})"
 			releasegroupstatus="$(echo "$releasedata" | jq -r '."release-group" | ."primary-type"')"
 			releasegroupsecondarytype="$(echo "$releasedata" | jq -r '."release-group" | ."secondary-types"[]')"
 			releasegroupgenres="$(echo "$releasedata" | jq -r '."release-group" | .genres[] | .name' | sort -u)"
-
+			echo "$releasedata" > $releasegrouptitle.json
 			# Skip null country
 			if [ "$releasecountry" = null ]; then
 				skip=true
@@ -841,11 +836,11 @@ VideoDownload () {
 			rm "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}".*
 		fi
 		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
-		python3 /usr/local/bin/youtube-dl -v ${cookies} -o "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mp4 --no-mtime --geo-bypass "$youtubeurl" &> /dev/nul
-		if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
+		python3 /usr/local/bin/youtube-dl -v ${cookies} -o "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl" &> /dev/nul
+		if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
-			width="$(ffprobe -v quiet -print_format json -show_streams  "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
-			height="$(ffprobe -v quiet -print_format json -show_streams  "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
+			width="$(ffprobe -v quiet -print_format json -show_streams  "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
+			height="$(ffprobe -v quiet -print_format json -show_streams  "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
 			if [[ "$width" -ge "3800" || "$height" -ge "2100" ]]; then
 				videoquality=3
 			elif [[ "$width" -ge "1900" || "$height" -ge "1060" ]]; then
@@ -862,22 +857,36 @@ VideoDownload () {
 
 			if [ ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" ]; then
 				ffmpeg -y \
-					-i "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
+					-i "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
 					-vframes 1 -an -s 640x360 -ss 30 \
 					"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" &> /dev/null
 			fi
+
+			if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
+				ffmpeg -y \
+					-i "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
+					-c copy \
+					-movflags faststart \
+					"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" &> /dev/null
+			fi
+
+			# reset language
+			releaselanguage="null"
 			
-			python3 /config/scripts/tag.py \
-               	--file "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
-				--songtitle "${videotitle}${nfovideodisambiguation}" \
-				--songalbum "$album" \
-				--songartist "$LidArtistNameCap" \
-				--songartistalbum "$LidArtistNameCap" \
-				--songtracknumber "$track" \
-				--songgenre "$genre" \
-				--songdate "$year" \
-				--quality "$videoquality" \
-				--songartwork "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+			if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
+				rm "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+				python3 /config/scripts/tag.py \
+					--file "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
+					--songtitle "${videotitle}${nfovideodisambiguation}" \
+					--songalbum "$album" \
+					--songartist "$LidArtistNameCap" \
+					--songartistalbum "$LidArtistNameCap" \
+					--songtracknumber "$track" \
+					--songgenre "$genre" \
+					--songdate "$year" \
+					--quality "$videoquality" \
+					--songartwork "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+			fi
 			echo "Video :: Downloaded :: $db :: ${LidArtistNameCap} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
 		else
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Downloaded Failed!"
