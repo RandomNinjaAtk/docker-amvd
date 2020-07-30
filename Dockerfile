@@ -26,6 +26,9 @@ RUN \
 	echo "************ install youtube-dl ************" && \
 	curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl && \
 	chmod a+rx /usr/local/bin/youtube-dl
+	echo "************ install mp4 tagging software ************" && \
+	pip3 install --no-cache-dir -U \
+		mutagen
 
 WORKDIR /
 
