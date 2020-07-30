@@ -394,6 +394,7 @@ DownloadVideos () {
 				videodisambiguation=""
 				videotitlelowercase="${videotitle,,}"
 				videodirectors="$(echo "$imvdbvideodata" | jq -r ".directors[] | .entity_name")"
+				videoimage="$(echo "$imvdbvideodata" | jq -r ".image.o")"
 				videoyear="$(echo "$imvdbvideodata" | jq -r ".year")"
 				santizevideotitle="$(echo "$imvdbvideotitle" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/')"
 				youtubeid="$(echo "$imvdbvideodata" | jq -r ".sources[] | select(.source==\"youtube\") | .source_data" | head -n 1)"
@@ -434,8 +435,17 @@ DownloadVideos () {
 				fi
 
 				VideoDownload
-
-				VideoNFOWriter
+				
+				if [ "WriteNFOs" == "true" ]; then
+					VideoNFOWriter
+				else
+					if find "$LIBRARY" -type f -iname "*.jpg" | read; then
+						rm "$LIBRARY"/*.jpg
+					fi
+					if find "$LIBRARY" -type f -iname "*.nfo" | read; then
+						rm "$LIBRARY"/*.nfo
+					fi
+				fi
 
 			done
 		else
@@ -525,6 +535,7 @@ DownloadVideos () {
 				fi
 				youtubeuploaddate="$(echo "$youtubedata" | jq -r '.upload_date')"
 				videoyear="$(echo ${youtubeuploaddate:0:4})"
+				videoimage=""
 				youtubeaveragerating="$(echo "$youtubedata" | jq -r '.average_rating')"
 				videoalbum="$(echo "$youtubedata" | jq -r '.album')"
 				youtubeid="$(echo "$youtubedata" | jq -r '.id')"
@@ -827,27 +838,40 @@ VideoDownload () {
 		python3 /usr/local/bin/youtube-dl -v ${cookies} -o "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mp4 --no-mtime --geo-bypass "$youtubeurl" &> /dev/nul
 		if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
-			ffmpeg -y \
-				-i "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
-				-vframes 1 -an -s 640x360 -ss 30 \
-				"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" &> /dev/null
-			mv "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" "$LIBRARY/temp.mp4"
-			ffmpeg -y \
-				-i "$LIBRARY/temp.mp4" \
-				-i "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" \
-				-map 0 -map 1 -c copy -c:v:1 jpg -disposition:v:1 attached_pic \
-				-c copy \
-				-metadata title="${videotitle}${nfovideodisambiguation}" \
-				-metadata artist="$LidArtistNameCap" \
-				-metadata album_artist="$LidArtistNameCap" \
-				-metadata album="$album" \
-				-metadata date="$year" \
-				-metadata genre="$genre" \
-				-metadata track="$track" \
-				-metadata media_type="6" \
-				-movflags +faststart \
-				"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" &> /dev/null
-			rm "$LIBRARY/temp.mp4"
+			width="$(ffprobe -v quiet -print_format json -show_streams  "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
+			height="$(ffprobe -v quiet -print_format json -show_streams  "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
+			if [[ "$width" -ge "3800" || "$height" -ge "2100" ]]; then
+				videoquality=3
+			elif [[ "$width" -ge "1900" || "$height" -ge "1060" ]]; then
+				videoquality=2
+			elif [[ "$width" -ge "1260" || "$height" -ge "700" ]]; then
+				videoquality=1
+			else
+				videoquality=0
+			fi
+
+			if [ ! -z "$videoimage" ]; then
+				curl -s "$videoimage" -o "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+			fi
+
+			if [ ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" ]; then
+				ffmpeg -y \
+					-i "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
+					-vframes 1 -an -s 640x360 -ss 30 \
+					"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" &> /dev/null
+			fi
+			
+			python3 /config/scripts/tag.py \
+               	--file "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
+				--songtitle "${videotitle}${nfovideodisambiguation}" \
+				--songalbum "$album" \
+				--songartist "$LidArtistNameCap" \
+				--songartistalbum "$LidArtistNameCap" \
+				--songtracknumber "$track" \
+				--songgenre "$genre" \
+				--songdate "$year" \
+				--quality "$videoquality" \
+				--songartwork "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
 			echo "Video :: Downloaded :: $db :: ${LidArtistNameCap} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
 		else
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Downloaded Failed!"
