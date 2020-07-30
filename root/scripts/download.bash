@@ -754,7 +754,6 @@ VideoMatch () {
 			releasegroupstatus="$(echo "$releasedata" | jq -r '."release-group" | ."primary-type"')"
 			releasegroupsecondarytype="$(echo "$releasedata" | jq -r '."release-group" | ."secondary-types"[]')"
 			releasegroupgenres="$(echo "$releasedata" | jq -r '."release-group" | .genres[] | .name' | sort -u)"
-			echo "$releasedata" > $releasegrouptitle.json
 			# Skip null country
 			if [ "$releasecountry" = null ]; then
 				skip=true
