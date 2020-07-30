@@ -39,7 +39,7 @@ Configuration () {
 
 	# verify LIBRARY
 	if [ ! -z "$LIBRARY" ]; then
-		echo "Video: Download Path: $LIBRARY"
+		echo "Music Video Library Location: $LIBRARY"
 	else
 		echo "ERROR: LIBRARY setting invalid, currently set to: $LIBRARY"
 		echo "ERROR: LIBRARY Expected Valid Setting: /your/path/to/music/video/folder"
@@ -54,7 +54,7 @@ Configuration () {
 
 	# Country Code
 	if [ ! -z "$CountryCode" ]; then
-		echo "Video: Country Code: $CountryCode"
+		echo "Music Video Country Code: $CountryCode"
 	else
 		echo "ERROR: CountryCode is empty, please configure wtih a valid Country Code (lowercase)"
 		error=1
@@ -62,32 +62,38 @@ Configuration () {
 
 	# RequireVideoMatch
 	if [ "$RequireVideoMatch" = "true" ]; then
-		echo "Video: Require Video Match: ENABLED"
+		echo "Music Video Require Match: ENABLED"
 	else
-		echo "Video: Require Video Match: DISABLED"
+		echo "Music Video Require Match: DISABLED"
 	fi
 		
 	# videoformat
 	if [ ! -z "$videoformat" ]; then
-		echo "Video: Format Set To: $videoformat"
+		echo "Music Video Format Set To: $videoformat"
 	else
-		echo "Video: Format Set To: --format bestvideo[vcodec*=avc1]+bestaudio[ext=m4a]"
+		echo "Music Video Format Set To: --format bestvideo[vcodec*=avc1]+bestaudio[ext=m4a]"
 	fi
 		
 	# videofilter
 	if [ ! -z "$videofilter" ]; then
-		echo "Video: Filter: ENABLED ($videofilter)"
+		echo "Music Video Filter: ENABLED ($videofilter)"
 	else
-		echo "Video: Filter: DISABLED"
+		echo "Music Video Filter: DISABLED"
 	fi
 		
 	# subtitlelanguage
 	if [ ! -z "$subtitlelanguage" ]; then
 		subtitlelanguage="${subtitlelanguage,,}"
-		echo "Video: Subtitle Language: $subtitlelanguage"
+		echo "Music Video Subtitle Language: $subtitlelanguage"
 	else
 		subtitlelanguage="en"
-		echo "Video: Subtitle Language: $subtitlelanguage"
+		echo "Music Video Subtitle Language: $subtitlelanguage"
+	fi
+	
+	if [ "WriteNFOs" == "true" ]; then
+		echo "Music Video NFO Writer: ENABLED"
+	else
+		echo "Music Video NFO Writer: DISABLED"	
 	fi
 
 	if [ $error = 1 ]; then
