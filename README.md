@@ -59,7 +59,6 @@ Container images are configured using parameters passed at runtime (such as thos
 
 | Parameter | Function |
 | --- | --- |
-| `-p 8686` | Application WebUI |
 | `-e PUID=1000` | for UserID - see below for explanation |
 | `-e PGID=1000` | for GroupID - see below for explanation |
 | `-v /config` | Configuration files for Lidarr. |
