@@ -3,7 +3,7 @@
 [RandomNinjaAtk/amvd](https://github.com/RandomNinjaAtk/docker-amvd) is a Lidarr Companion script to automatically download and tag Music Videos for use in various media applications
 
 ### Video Example (Kodi)
-![](https://raw.githubusercontent.com/RandomNinjaAtk/Scripts/master/images/kodi-music-videos.png)
+<img src="https://raw.githubusercontent.com/RandomNinjaAtk/Scripts/master/images/kodi-music-videos.png" width="700px">
 
 ## Features
 * Downloading **Music Videos** using online sources for use in popular applications (Plex/Kodi/Emby/Jellyfin): 
