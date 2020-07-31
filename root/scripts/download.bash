@@ -1,8 +1,8 @@
 #!/usr/bin/with-contenv bash
 agent="automated-music-video-downloader ( https://github.com/RandomNinjaAtk/docker-amvd )"
 Configuration () {
-	processstartid="$(ps -A -o pid,cmd|grep "/config/scripts/start.bash" | grep -v grep | head -n 1 | awk '{print $1}')"
-	processdownloadid="$(ps -A -o pid,cmd|grep "/config/scripts/download.bash" | grep -v grep | head -n 1 | awk '{print $1}')"
+	processstartid="$(ps -A -o pid,cmd|grep "start.bash" | grep -v grep | head -n 1 | awk '{print $1}')"
+	processdownloadid="$(ps -A -o pid,cmd|grep "download.bash" | grep -v grep | head -n 1 | awk '{print $1}')"
 	echo "To kill script, use the following command:"
 	echo "kill -9 $processstartid"
 	echo "kill -9 $processdownloadid"
