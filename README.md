@@ -2,6 +2,9 @@
 
 [RandomNinjaAtk/amvd](https://github.com/RandomNinjaAtk/docker-amvd) is a Lidarr Companion script to automatically download and tag Music Videos for use in various media applications
 
+[![radarr](https://raw.githubusercontent.com/RandomNinjaAtk/unraid-templates/master/randomninjaatk/img/amvd.png)](https://github.com/Radarr/Radarr)
+
+
 ### Video Example (Kodi)
 <img src="https://raw.githubusercontent.com/RandomNinjaAtk/Scripts/master/images/kodi-music-videos.png" width="700px">
 
@@ -88,3 +91,13 @@ Container images are configured using parameters passed at runtime (such as thos
   * Contains the artist data cache to speed up processes
 * <strong>/config/coookies</strong>
   * Store your cookies.txt file in this location, may be required for youtube-dl to work properly
+  
+  
+<br />
+<br />
+<br />
+<br />
+  
+ 
+ ##### Attribution 
+ Icons made by <a href="http://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
