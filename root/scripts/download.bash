@@ -95,6 +95,14 @@ Configuration () {
 	else
 		echo "Music Video NFO Writer: DISABLED"	
 	fi
+	
+	if [ ! -z "$FilePermissions" ]; then
+        echo "File Permissions: $FilePermissions"
+	    else
+		echo "ERROR: FilePermissions not set, using default..."
+		FilePermissions="666"
+		echo "File Permissions: $FilePermissions"
+	    fi
 
 	if [ $error = 1 ]; then
 		echo "Please correct errors before attempting to run script again..."
@@ -892,6 +900,7 @@ VideoDownload () {
 					--quality "$videoquality" \
 					--songartwork "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
 			fi
+			chmod $FilePermissions "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
 			echo "Video :: Downloaded :: $db :: ${LidArtistNameCap} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
 		else
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Downloaded Failed!"
