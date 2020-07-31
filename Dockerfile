@@ -2,7 +2,7 @@ FROM lsiobase/ubuntu:focal
 LABEL maintainer="RandomNinjaAtk"
 
 ENV TITLE="Automated Music Video Downloader"
-ENV VERSION="0.0.1"
+ENV VERSION="1.0.0"
 ENV MBRAINZMIRROR="https://musicbrainz.org"
 ENV SMA_PATH /usr/local/sma
 
