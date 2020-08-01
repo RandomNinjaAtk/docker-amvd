@@ -19,6 +19,7 @@ RUN \
 		python3 \
 		python3-pip \
 		ffmpeg \
+		mkvtoolnix \
 		cron && \
 	rm -rf \
 		/tmp/* \
