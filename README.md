@@ -75,6 +75,7 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e videofilter="live"` | This will filter out videos Matching MusicBrainz secondary release type and album disambiguation (single word only) |
 | `-e WriteNFOs="false"` | true = enabled :: Create NFO and Local Thumbnail for use in applications such as Kodi |
 | `-e FilePermissions=666` | Based on chmod linux permissions |
+| `-e extension="mkv"` | mkv or mp4 :: Set to the desired output format... |
 
 # Script Information
 * Script will automatically run when enabled, if disabled, you will need to manually execute with the following command:
