@@ -98,11 +98,16 @@ Configuration () {
 	
 	if [ ! -z "$FilePermissions" ]; then
         echo "File Permissions: $FilePermissions"
-	    else
+	else
 		echo "ERROR: FilePermissions not set, using default..."
 		FilePermissions="666"
 		echo "File Permissions: $FilePermissions"
-	    fi
+	fi
+
+	if [ -z "$extension" ]; then
+		extension="mkv"
+	fi
+	echo "Music Video Extension: $extension"
 
 	if [ $error = 1 ]; then
 		echo "Please correct errors before attempting to run script again..."
@@ -844,24 +849,35 @@ VideoDownload () {
 	else
 		track=""
 	fi
-	if [ ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
-		if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
-			rm "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}".*
-		fi
+	if [[ ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" || ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]]; then
 		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
 		python3 /usr/local/bin/youtube-dl -v ${cookies} -o "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl" &> /dev/nul
 		if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
-			width="$(ffprobe -v quiet -print_format json -show_streams  "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
-			height="$(ffprobe -v quiet -print_format json -show_streams  "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
+			audiochannels="$(ffprobe -v quiet -print_format json -show_streams "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels")"
+			width="$(ffprobe -v quiet -print_format json -show_streams "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
+			height="$(ffprobe -v quiet -print_format json -show_streams "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
 			if [[ "$width" -ge "3800" || "$height" -ge "2100" ]]; then
 				videoquality=3
+				qualitydescription="UHD"
 			elif [[ "$width" -ge "1900" || "$height" -ge "1060" ]]; then
 				videoquality=2
+				qualitydescription="FHD"
 			elif [[ "$width" -ge "1260" || "$height" -ge "700" ]]; then
 				videoquality=1
+				qualitydescription="HD"
 			else
 				videoquality=0
+				qualitydescription="SD"
+			fi
+
+			if [ "$audiochannels" -ge "3" ]; then
+				channelcount=$(( $audiochannels - 1 ))
+				audiodescription="${audiochannels}.1 Channel"
+			elif [ "$audiochannels" == "2" ]; then
+				audiodescription="Stereo"
+			elif [ "$audiochannels" == "1" ]; then
+				audiodescription="Mono"
 			fi
 
 			if [ ! -z "$videoimage" ]; then
@@ -875,32 +891,70 @@ VideoDownload () {
 					"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" &> /dev/null
 			fi
 
-			if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
+			if [ "$extension" == "mkv" ]; then
+				echo "========================START MKVPROPEDIT========================"
+				mkvpropedit "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" --add-track-statistics-tags
+				echo "========================STOP MKVPROPEDIT========================="	
+				mv "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" "$LIBRARY/temp.mkv"
+				cp "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$LIBRARY/cover.jpg"
+				echo "========================START FFMPEG========================"
 				ffmpeg -y \
-					-i "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
+					-i "$LIBRARY/temp.mkv" \
 					-c copy \
-					-movflags faststart \
-					"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" &> /dev/null
+					-metadata author="$LidArtistNameCap" \
+					-metadata TITLE="${videotitle}${nfovideodisambiguation}" \
+					-metadata DATE_RELEASE="$year" \
+					-metadata DATE="$year" \
+					-metadata YEAR="$year" \
+					-metadata GENRE="$genre" \
+					-metadata ALBUM="$album" \
+					-metadata:s:v:0 title="$qualitydescription" \
+					-metadata:s:a:0 title="$audiodescription" \
+					-attach "$LIBRARY/cover.jpg" -metadata:s:t mimetype=image/jpeg \
+					"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+				echo "$audiodescription"
+				echo "========================STOP FFMPEG========================="	
+				rm "$LIBRARY/cover.jpg"
+				rm "$LIBRARY/temp.mkv"
+				chmod $FilePermissions "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
 			fi
 
+			if [ "$extension" == "mp4" ]; then
+
+				if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
+					echo "========================START FFMPEG========================"
+					ffmpeg -y \
+						-i "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
+						-c copy \
+						-metadata:s:v:0 title="$qualitydescription" \
+						-metadata:s:a:0 title="$audiodescription" \
+						-movflags faststart \
+						"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" &> /dev/null
+					echo "========================STOP FFMPEG========================="	
+				fi
+				
+				if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
+					rm "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+					echo "========================START TAGGING========================"
+					python3 /config/scripts/tag.py \
+						--file "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
+						--songtitle "${videotitle}${nfovideodisambiguation}" \
+						--songalbum "$album" \
+						--songartist "$LidArtistNameCap" \
+						--songartistalbum "$LidArtistNameCap" \
+						--songtracknumber "$track" \
+						--songgenre "$genre" \
+						--songdate "$year" \
+						--quality "$videoquality" \
+						--songartwork "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+						echo "========================STOP TAGGING========================="	
+				fi
+				chmod $FilePermissions "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
+			fi
+			
 			# reset language
 			releaselanguage="null"
 			
-			if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
-				rm "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
-				python3 /config/scripts/tag.py \
-					--file "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
-					--songtitle "${videotitle}${nfovideodisambiguation}" \
-					--songalbum "$album" \
-					--songartist "$LidArtistNameCap" \
-					--songartistalbum "$LidArtistNameCap" \
-					--songtracknumber "$track" \
-					--songgenre "$genre" \
-					--songdate "$year" \
-					--quality "$videoquality" \
-					--songartwork "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
-			fi
-			chmod $FilePermissions "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
 			echo "Video :: Downloaded :: $db :: ${LidArtistNameCap} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
 		else
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Downloaded Failed!"
