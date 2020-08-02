@@ -97,11 +97,11 @@ Configuration () {
 	fi
 	
 	if [ ! -z "$FilePermissions" ]; then
-        echo "File Permissions: $FilePermissions"
+        echo "Music Video File Permissions: $FilePermissions"
 	else
 		echo "ERROR: FilePermissions not set, using default..."
 		FilePermissions="666"
-		echo "File Permissions: $FilePermissions"
+		echo "Music Video File Permissions: $FilePermissions"
 	fi
 
 	if [ -z "$extension" ]; then
