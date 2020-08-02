@@ -70,7 +70,7 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e MBRATELIMIT=1` | OPTIONAL: musicbrainz rate limit, musicbrainz allows only 1 connection per second, max setting is 10 |
 | `-e CountryCode=us` | Set the country code for preferred video matching, uses Musicbrainz Country Codes, lowercase only. |
 | `-e RequireVideoMatch=true` | true = enabled :: Only keep videos that could be matched to a Musicbrainz music track. |
-| `-e videoformat="--format bestvideo[vcodec*=avc1]+bestaudio[ext=m4a]"` | For guidence, please see youtube-dl documentation |
+| `-e videoformat="--format bestvideo[vcodec*=avc1]+bestaudio"` | For guidence, please see youtube-dl documentation |
 | `-e subtitlelanguage="en"` | Desired Language Code :: For guidence, please see youtube-dl documentation. |
 | `-e videofilter="live"` | This will filter out videos Matching MusicBrainz secondary release type and album disambiguation (single word only) |
 | `-e WriteNFOs="false"` | true = enabled :: Create NFO and Local Thumbnail for use in applications such as Kodi |
