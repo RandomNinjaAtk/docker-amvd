@@ -892,6 +892,12 @@ VideoDownload () {
 			fi
 
 			if [ "$extension" == "mkv" ]; then
+				if [ ! -z "$videodirectors" ]; then
+					mkvdirector="$(echo "$videodrectors" | head -n 1)"
+					mkvdirectormetadata="-metadata DIRECTOR="$videodrectors""
+				else
+					mkvdirectormetadata=""
+				fi
 				echo "========================START MKVPROPEDIT========================"
 				mkvpropedit "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" --add-track-statistics-tags
 				echo "========================STOP MKVPROPEDIT========================="	
@@ -901,18 +907,18 @@ VideoDownload () {
 				ffmpeg -y \
 					-i "$LIBRARY/temp.mkv" \
 					-c copy \
-					-metadata author="$LidArtistNameCap" \
 					-metadata TITLE="${videotitle}${nfovideodisambiguation}" \
+					-metadata ARTIST="$LidArtistNameCap" \
 					-metadata DATE_RELEASE="$year" \
-					-metadata DATE="$year" \
-					-metadata YEAR="$year" \
 					-metadata GENRE="$genre" \
 					-metadata ALBUM="$album" \
+					-metadata ENCODED_BY="AMVD" \
+					-metadata CONTENT_TYPE="Music Video" \
+					$mkvdirectormetadata \
 					-metadata:s:v:0 title="$qualitydescription" \
 					-metadata:s:a:0 title="$audiodescription" \
 					-attach "$LIBRARY/cover.jpg" -metadata:s:t mimetype=image/jpeg \
 					"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
-				echo "$audiodescription"
 				echo "========================STOP FFMPEG========================="	
 				rm "$LIBRARY/cover.jpg"
 				rm "$LIBRARY/temp.mkv"
@@ -928,6 +934,7 @@ VideoDownload () {
 						-c copy \
 						-metadata:s:v:0 title="$qualitydescription" \
 						-metadata:s:a:0 title="$audiodescription" \
+						-metadata ENCODED_BY="AMVD" \
 						-movflags faststart \
 						"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" &> /dev/null
 					echo "========================STOP FFMPEG========================="	
