@@ -934,9 +934,9 @@ VideoDownload () {
 						-c copy \
 						-metadata:s:v:0 title="$qualitydescription" \
 						-metadata:s:a:0 title="$audiodescription" \
-						-metadata ENCODED_BY="AMVD" \
 						-movflags faststart \
-						"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" &> /dev/null
+						-strict -2 \
+						"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
 					echo "========================STOP FFMPEG========================="	
 				fi
 				
