@@ -590,7 +590,16 @@ DownloadVideos () {
 
 				VideoDownload
 
-				VideoNFOWriter
+				if [ "WriteNFOs" == "true" ]; then
+					VideoNFOWriter
+				else
+					if find "$LIBRARY" -type f -iname "*.jpg" | read; then
+						rm "$LIBRARY"/*.jpg
+					fi
+					if find "$LIBRARY" -type f -iname "*.nfo" | read; then
+						rm "$LIBRARY"/*.nfo
+					fi
+				fi
 
 			done
 		done
