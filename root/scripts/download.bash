@@ -603,12 +603,12 @@ DownloadVideos () {
 
 			done
 		done
-		downloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mp4" | wc -l)
+		downloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.$extension" | wc -l)
 		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
 		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
 		touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
 	done
-	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "*.mp4" | wc -l)
+	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "*.$extension" | wc -l)
 	echo "######################################### $totaldownloadcount VIDEOS DOWNLOADED #########################################"
 }
 
