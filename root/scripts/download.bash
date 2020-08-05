@@ -384,14 +384,15 @@ DownloadVideos () {
 		LidArtistPath="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .path")"
 		LidArtistNameCap="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .artistName")"
 		sanatizedartistname="$(echo "${LidArtistNameCap}" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/')"
-		recordingsfile="$(cat "/config/cache/$sanatizedartistname-$mbid-recordings.json")"
-		mbzartistinfo="$(cat "/config/cache/$sanatizedartistname-$mbid-info.json")"
-		releasesfile="$(cat "/config/cache/$sanatizedartistname-$mbid-releases.json")"
-		
+				
 		if  [ "$LidArtistNameCap" == "Various Artists" ]; then
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping, not processed by design..."
 			continue
 		fi
+		
+		recordingsfile="$(cat "/config/cache/$sanatizedartistname-$mbid-recordings.json")"
+		mbzartistinfo="$(cat "/config/cache/$sanatizedartistname-$mbid-info.json")"
+		releasesfile="$(cat "/config/cache/$sanatizedartistname-$mbid-releases.json")"
 		
 
 		if [ -f "/config/cache/$sanatizedartistname-$mbid-download-complete" ]; then
