@@ -131,7 +131,10 @@ CacheEngine () {
 		mbid="${MBArtistID[$id]}"
         LidArtistNameCap="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .artistName")"
         sanatizedartistname="$(echo "${LidArtistNameCap}" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/')"
-
+	if  [ "$LidArtistNameCap" == "Various Artists" ]; then
+		echo "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Skipping, not processed by design..."
+		continue
+	fi
 		if [ -f "/config/cache/$sanatizedartistname-$mbid-cache-complete" ]; then
 			if ! [[ $(find "/config/cache/$sanatizedartistname-$mbid-cache-complete" -mtime +7 -print) ]]; then
 				echo "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Skipping until cache expires..."
@@ -384,6 +387,11 @@ DownloadVideos () {
 		recordingsfile="$(cat "/config/cache/$sanatizedartistname-$mbid-recordings.json")"
 		mbzartistinfo="$(cat "/config/cache/$sanatizedartistname-$mbid-info.json")"
 		releasesfile="$(cat "/config/cache/$sanatizedartistname-$mbid-releases.json")"
+		
+		if  [ "$LidArtistNameCap" == "Various Artists" ]; then
+			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping, not processed by design..."
+			continue
+		fi
 		
 
 		if [ -f "/config/cache/$sanatizedartistname-$mbid-download-complete" ]; then
