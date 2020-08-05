@@ -1,6 +1,6 @@
 # AMVD - Automated Music Video Downloader 
 
-[RandomNinjaAtk/amvd](https://github.com/RandomNinjaAtk/docker-amvd) is a Lidarr Companion script to automatically download and tag Music Videos for use in various media applications
+[RandomNinjaAtk/amvd](https://github.com/RandomNinjaAtk/docker-amvd) is a Lidarr companion script to automatically download and tag Music Videos for use in other video applications (plex/kodi/jellyfin/emby) 
 
 [![RandomNinjaAtk/amvd](https://raw.githubusercontent.com/RandomNinjaAtk/unraid-templates/master/randomninjaatk/img/amvd.png)](https://github.com/RandomNinjaAtk/docker-amvd)
 
