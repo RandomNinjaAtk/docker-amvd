@@ -9,8 +9,10 @@ Configuration () {
 	echo ""
 	echo ""
 	sleep 5
-
-	echo "######################################### CONFIGURATION VERIFICATION #########################################"
+	
+	echo "############################################ SCRIPT VERSION 1.0.01"
+	echo "############################################ DOCKER VERSION $VERSION"
+	echo "############################################ CONFIGURATION VERIFICATION"
 	error=0
 	
 	# Verify Musicbrainz DB Connectivity
@@ -869,7 +871,9 @@ VideoDownload () {
 	fi
 	if [[ ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" || ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]]; then
 		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
-		python3 /usr/local/bin/youtube-dl -v ${cookies} -o "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl" &> /dev/nul
+		echo "=======================START YOUTUBE-DL========================="
+		python3 /usr/local/bin/youtube-dl -v ${cookies} -o "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
+		echo "========================STOP YOUTUBE-DL========================="
 		if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
 			audiochannels="$(ffprobe -v quiet -print_format json -show_streams "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels")"
