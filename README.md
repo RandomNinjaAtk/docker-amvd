@@ -87,6 +87,70 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e FilePermissions=666` | Based on chmod linux permissions |
 | `-e extension="mkv"` | mkv or mp4 :: Set to the desired output format... |
 
+## Usage
+
+Here are some example snippets to help you get started creating a container.
+
+### docker
+
+```
+docker create \
+  --name=amvd \
+  -v /path/to/config/files:/config \
+  -e LIBRARY=/path/to/music-videos \
+  -e PUID=1000 \
+  -e PGID=1000 \
+  -e AUTOSTART=true \
+  -e usetidal=false \
+  -e tidalusername=TIDALUSERNAME \
+  -e tidalpassword=TIDALPASSWORD \
+  -e RequireVideoMatch=true \
+  -e videoformat="--format bestvideo[vcodec*=avc1]+bestaudio" \
+  -e subtitlelanguage=en \
+  -e videofilter=live \
+  -e FilePermissions=666 \
+  -e MBRAINZMIRROR=https://musicbrainz.org \
+  -e MBRATELIMIT=1 \
+  -e LidarrUrl=http://127.0.0.1:8686 \
+  -e LidarrAPIkey=LIDARRAPI \
+  --restart unless-stopped \
+  randomninjaatk/amvd 
+```
+
+
+### docker-compose
+
+Compatible with docker-compose v2 schemas.
+
+```
+---
+version: "2.1"
+services:
+  amd:
+    image: randomninjaatk/amvd 
+    container_name: amvd
+    volumes:
+      - /path/to/config/files:/config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - AUTOSTART=true
+      - usetidal=false
+      - tidalusername=TIDALUSERNAME
+      - tidalpassword=TIDALPASSWORD
+      - RequireVideoMatch=true
+      - videoformat="--format bestvideo[vcodec*=avc1]+bestaudio"
+      - subtitlelanguage=en
+      - videofilter=live
+      - FilePermissions=666
+      - MBRAINZMIRROR=https://musicbrainz.org
+      - MBRATELIMIT=1
+      - LidarrUrl=http://127.0.0.1:8686
+      - LidarrAPIkey=LIDARRAPI
+    restart: unless-stopped
+```
+
+
 # Script Information
 * Script will automatically run when enabled, if disabled, you will need to manually execute with the following command:
   * From Host CLI: `docker exec -it amvd /bin/bash -c 'bash /config/scripts/download.bash'`
