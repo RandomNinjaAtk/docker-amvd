@@ -75,6 +75,9 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e LidarrAPIkey="08d108d108d108d108d108d108d108d1"` | Lidarr API key. |
 | `-e MBRAINZMIRROR="https://musicbrainz.org"` | OPTIONAL :: Only change if using a different mirror |
 | `-e MBRATELIMIT=1` | OPTIONAL: musicbrainz rate limit, musicbrainz allows only 1 connection per second, max setting is 10 |
+| `-e usetidal=false` | true = enabled :: This will enable downloading all videos from Tidal for an artist, paid subscription required :: OPTIONAL |
+| `-e tidalusername=yourusername` | REQUIRED for Tidal |
+| `-e tidalpassword=yourpasssword` | REQUIRED for Tidal |
 | `-e CountryCode=us` | Set the country code for preferred video matching, uses Musicbrainz Country Codes, lowercase only. |
 | `-e RequireVideoMatch=true` | true = enabled :: Only keep videos that could be matched to a Musicbrainz music track. |
 | `-e videoformat="--format bestvideo[vcodec*=avc1]+bestaudio"` | For guidence, please see youtube-dl documentation |
@@ -83,6 +86,70 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e WriteNFOs="false"` | true = enabled :: Create NFO and Local Thumbnail for use in applications such as Kodi |
 | `-e FilePermissions=666` | Based on chmod linux permissions |
 | `-e extension="mkv"` | mkv or mp4 :: Set to the desired output format... |
+
+## Usage
+
+Here are some example snippets to help you get started creating a container.
+
+### docker
+
+```
+docker create \
+  --name=amvd \
+  -v /path/to/config/files:/config \
+  -e LIBRARY=/path/to/music-videos \
+  -e PUID=1000 \
+  -e PGID=1000 \
+  -e AUTOSTART=true \
+  -e usetidal=false \
+  -e tidalusername=TIDALUSERNAME \
+  -e tidalpassword=TIDALPASSWORD \
+  -e RequireVideoMatch=true \
+  -e videoformat="--format bestvideo[vcodec*=avc1]+bestaudio" \
+  -e subtitlelanguage=en \
+  -e videofilter=live \
+  -e FilePermissions=666 \
+  -e MBRAINZMIRROR=https://musicbrainz.org \
+  -e MBRATELIMIT=1 \
+  -e LidarrUrl=http://127.0.0.1:8686 \
+  -e LidarrAPIkey=LIDARRAPI \
+  --restart unless-stopped \
+  randomninjaatk/amvd 
+```
+
+
+### docker-compose
+
+Compatible with docker-compose v2 schemas.
+
+```
+---
+version: "2.1"
+services:
+  amd:
+    image: randomninjaatk/amvd 
+    container_name: amvd
+    volumes:
+      - /path/to/config/files:/config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - AUTOSTART=true
+      - usetidal=false
+      - tidalusername=TIDALUSERNAME
+      - tidalpassword=TIDALPASSWORD
+      - RequireVideoMatch=true
+      - videoformat="--format bestvideo[vcodec*=avc1]+bestaudio"
+      - subtitlelanguage=en
+      - videofilter=live
+      - FilePermissions=666
+      - MBRAINZMIRROR=https://musicbrainz.org
+      - MBRATELIMIT=1
+      - LidarrUrl=http://127.0.0.1:8686
+      - LidarrAPIkey=LIDARRAPI
+    restart: unless-stopped
+```
+
 
 # Script Information
 * Script will automatically run when enabled, if disabled, you will need to manually execute with the following command:
@@ -112,4 +179,5 @@ Container images are configured using parameters passed at runtime (such as thos
 - [youtube-dl](https://ytdl-org.github.io/youtube-dl/index.html)
 - [Lidarr](https://lidarr.audio/)
 - [Musicbrainz](https://musicbrainz.org/)
+- [Tidal-Media-Downloader](https://github.com/yaronzz/Tidal-Media-Downloader)
 - Icons made by <a href="http://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
