@@ -75,6 +75,9 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e LidarrAPIkey="08d108d108d108d108d108d108d108d1"` | Lidarr API key. |
 | `-e MBRAINZMIRROR="https://musicbrainz.org"` | OPTIONAL :: Only change if using a different mirror |
 | `-e MBRATELIMIT=1` | OPTIONAL: musicbrainz rate limit, musicbrainz allows only 1 connection per second, max setting is 10 |
+| `-e usetidal=false` | true = enabled :: This will enable downloading all videos from Tidal for an artist, paid subscription required :: OPTIONAL |
+| `-e tidalusername=yourusername` | REQUIRED for Tidal |
+| `-e tidalpassword=yourpasssword` | REQUIRED for Tidal |
 | `-e CountryCode=us` | Set the country code for preferred video matching, uses Musicbrainz Country Codes, lowercase only. |
 | `-e RequireVideoMatch=true` | true = enabled :: Only keep videos that could be matched to a Musicbrainz music track. |
 | `-e videoformat="--format bestvideo[vcodec*=avc1]+bestaudio"` | For guidence, please see youtube-dl documentation |
@@ -112,4 +115,5 @@ Container images are configured using parameters passed at runtime (such as thos
 - [youtube-dl](https://ytdl-org.github.io/youtube-dl/index.html)
 - [Lidarr](https://lidarr.audio/)
 - [Musicbrainz](https://musicbrainz.org/)
+- [Tidal-Media-Downloader](https://github.com/yaronzz/Tidal-Media-Downloader)
 - Icons made by <a href="http://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
