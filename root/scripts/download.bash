@@ -10,7 +10,7 @@ Configuration () {
 	echo ""
 	sleep 5
 
-	echo "############################################ SCRIPT VERSION 1.1.2"
+	echo "############################################ SCRIPT VERSION 1.1.3"
 	echo "############################################ DOCKER VERSION $VERSION"
 	echo "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -1039,36 +1039,53 @@ TidalVideoDownloads () {
 		mbzartistinfo="$(cat "/config/cache/$sanatizedartistname-$mbid-info.json")"
 		tidalurl="$(echo "$mbzartistinfo" | jq -r ".relations | .[] | .url | select(.resource | contains(\"tidal\")) | .resource")"
 		tidalartistid="$(echo "$tidalurl" | grep -o '[[:digit:]]*')"
-		if [ ! -z "$tidalurl" ]; then
-			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $tidalurl :: $tidalartistid"
-			python3 /config/scripts/tvd.py "$tidalartistid" "$LidArtistNameCap" "$LIBRARY"
-		else
-			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: ERROR: musicbrainz id: $mbid is missing Tidal Artist link, see: \"/config/logs/musicbrainzerror.log\" for more detail..."
-			echo "$LidArtistNameCap :: Update Musicbrainz Relationship Page: https://musicbrainz.org/artist/$mbid/relationships with Tidal Artist Link" >> "/config/logs/musicbrainzerror.log"
-		fi
-		WORKINGDIR="${PWD}"
-		cd "$LIBRARY"
-		OLDIFS="$IFS"
-		IFS=$'\n'
-		videolistbysize=($(find . -type f -iregex ".*\ ([0-9]*).mkv" | sort -u))
-		IFS="$OLDIFS"
-		cd "$WORKINGDIR"
-		for id in ${!videolistbysize[@]}; do
-			currentprocess=$(( $id ))
-			currentprocessplusone=$(( $id + 1 ))
-			videofilename="$LIBRARY/${videolistbysize[$id]}"
-			newvideofilename="$(echo "$videofilename" | sed -e 's/ ([0-9]*).mkv$//')"
-			if [[ -e $newvideofilename.mkv || -L $newvideofilename.mkv ]] ; then
-				i=1
-				while [[ -e "$newvideofilename [$i]".mkv || -L "$newvideofilename [$i]".mkv ]] ; do
-					let i++
-				done
-				newvideofilename="$newvideofilename [$i]"
+		if [ -f "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" ]; then
+			if ! [[ $(find "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" -mtime +7 -print) ]]; then
+				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: Videos already downloaded according to cache, skipping..."
+				continue
+			else
+				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: Clearing completed download cache..."
 			fi
-			mv "$videofilename" "$newvideofilename.mkv"
-			chmod $FilePermissions "$newvideofilename.mkv"
-			chown abc:abc "$newvideofilename.mkv"
-		done
+		fi
+		if [ ! -f "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" ]; then
+			if [ ! -z "$tidalurl" ]; then
+				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $tidalurl :: $tidalartistid"
+				python3 /config/scripts/tvd.py "$tidalartistid" "$LidArtistNameCap" "$LIBRARY"
+			else
+				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: ERROR: musicbrainz id: $mbid is missing Tidal Artist link, see: \"/config/logs/musicbrainzerror.log\" for more detail..."
+				echo "$LidArtistNameCap :: Update Musicbrainz Relationship Page: https://musicbrainz.org/artist/$mbid/relationships with Tidal Artist Link" >> "/config/logs/musicbrainzerror.log"
+			fi
+			WORKINGDIR="${PWD}"
+			cd "$LIBRARY"
+			OLDIFS="$IFS"
+			IFS=$'\n'
+			videolistbysize=($(find . -type f -iregex ".*\ ([0-9]*).mkv" | sort -u))
+			IFS="$OLDIFS"
+			cd "$WORKINGDIR"
+			for id in ${!videolistbysize[@]}; do
+				currentprocess=$(( $id ))
+				currentprocessplusone=$(( $id + 1 ))
+				videofilename="$LIBRARY/${videolistbysize[$id]}"
+				newvideofilename="$(echo "$videofilename" | sed -e 's/ ([0-9]*).mkv$//')"
+				if [[ -e $newvideofilename.mkv || -L $newvideofilename.mkv ]] ; then
+					i=1
+					while [[ -e "$newvideofilename [$i]".mkv || -L "$newvideofilename [$i]".mkv ]] ; do
+						let i++
+					done
+					newvideofilename="$newvideofilename [$i]"
+				fi
+				mv "$videofilename" "$newvideofilename.mkv"
+				chmod $FilePermissions "$newvideofilename.mkv"
+				chown abc:abc "$newvideofilename.mkv"
+			done
+		else
+			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: Videos already downloaded, skipping.."
+			continue
+		fi
+		if [ ! -f "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" ]; then
+			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: All Available Videos Downloaded!"
+			touch "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete"
+		fi
 	done
 	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "*.mkv" | wc -l)
 	echo "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
