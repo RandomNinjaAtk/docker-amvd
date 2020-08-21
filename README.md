@@ -97,6 +97,7 @@ Here are some example snippets to help you get started creating a container.
 docker create \
   --name=amvd \
   -v /path/to/config/files:/config \
+  -v /path/to/music-videos:/path/to/music-videos \
   -e LIBRARY=/path/to/music-videos \
   -e PUID=1000 \
   -e PGID=1000 \
@@ -131,7 +132,9 @@ services:
     container_name: amvd
     volumes:
       - /path/to/config/files:/config
+      - /path/to/music-videos:/path/to/music-videos
     environment:
+      - LIBRARY=/path/to/music-videos
       - PUID=1000
       - PGID=1000
       - AUTOSTART=true
