@@ -10,7 +10,7 @@ Configuration () {
 	echo ""
 	sleep 5
 
-	echo "############################################ SCRIPT VERSION 1.1.0"
+	echo "############################################ SCRIPT VERSION 1.1.1"
 	echo "############################################ DOCKER VERSION $VERSION"
 	echo "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -63,13 +63,13 @@ Configuration () {
 			echo "ERROR: tidalpassword not provided"
 			error=1
 		else
-			if [ -f "login" ]; then
-				rm "login"
+			if [ -f "/config/scripts/login" ]; then
+				rm "/config/scripts/login"
 			fi
 			if [ ! -d "/config/logs/tidal" ]; then
 				mkdir -p "/config/logs/tidal"
 			fi
-			echo -e "${tidalusername}\n${tidalpassword}" > "login"
+			echo -e "${tidalusername}\n${tidalpassword}" > "/config/scripts/login"
 			echo "Music Video Format Set To: Best Available"
 			echo "Music Video Extension: mkv"
 		fi
@@ -1041,7 +1041,7 @@ TidalVideoDownloads () {
 		tidalartistid="$(echo "$tidalurl" | grep -o '[[:digit:]]*')"
 		if [ ! -z "$tidalurl" ]; then
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $tidalurl :: $tidalartistid"
-			python3 /config/tvd.py "$tidalartistid" "$LidArtistNameCap" "$LIBRARY"
+			python3 /config/scripts/tvd.py "$tidalartistid" "$LidArtistNameCap" "$LIBRARY"
 		else
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: ERROR: musicbrainz id: $mbid is missing Tidal Artist link, see: \"/config/logs/musicbrainzerror.log\" for more detail..."
 			echo "$LidArtistNameCap :: Update Musicbrainz Relationship Page: https://musicbrainz.org/artist/$mbid/relationships with Tidal Artist Link" >> "/config/logs/musicbrainzerror.log"
