@@ -27,8 +27,8 @@ class TVD:
         self.checkLogin()
 
     def login(self, email="", password=""):
-        if path.isfile('login'):
-            with open("login", 'r') as f:
+        if path.isfile('/config/scripts/login'):
+            with open("/config/scripts/login", 'r') as f:
                 email = f.readline()
                 password = f.readline()
         else:
