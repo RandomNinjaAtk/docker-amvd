@@ -10,7 +10,7 @@ Configuration () {
 	echo ""
 	sleep 5
 
-	echo "############################################ SCRIPT VERSION 1.1.3"
+	echo "############################################ SCRIPT VERSION 1.1.4"
 	echo "############################################ DOCKER VERSION $VERSION"
 	echo "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -1052,8 +1052,17 @@ TidalVideoDownloads () {
 				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $tidalurl :: $tidalartistid"
 				python3 /config/scripts/tvd.py "$tidalartistid" "$LidArtistNameCap" "$LIBRARY"
 			else
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: ERROR: musicbrainz id: $mbid is missing Tidal Artist link, see: \"/config/logs/musicbrainzerror.log\" for more detail..."
-				echo "$LidArtistNameCap :: Update Musicbrainz Relationship Page: https://musicbrainz.org/artist/$mbid/relationships with Tidal Artist Link" >> "/config/logs/musicbrainzerror.log"
+				if ! [ -f "/config/logs/musicbrainzerror.log" ]; then
+					touch "/config/logs/musicbrainzerror.log"
+				fi		
+				if [ -f "/config/logs/musicbrainzerror.log" ]; then
+					echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: ERROR: musicbrainz id: $mbid is missing Tidal Artist link, see: \"/config/logs/musicbrainzerror.log\" for more detail..."
+					if cat "/config/logs/musicbrainzerror.log" | grep "/$mbid/" | read; then
+						sleep 0
+					else
+						echo "$LidArtistNameCap :: Update Musicbrainz Relationship Page: https://musicbrainz.org/artist/$mbid/relationships with Tidal Artist Link" >> "/config/logs/musicbrainzerror.log"
+					fi
+				fi
 			fi
 			WORKINGDIR="${PWD}"
 			cd "$LIBRARY"
