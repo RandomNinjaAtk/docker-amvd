@@ -10,7 +10,7 @@ Configuration () {
 	echo ""
 	sleep 5
 
-	echo "############################################ SCRIPT VERSION 1.1.1"
+	echo "############################################ SCRIPT VERSION 1.1.2"
 	echo "############################################ DOCKER VERSION $VERSION"
 	echo "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -384,7 +384,7 @@ CacheEngine () {
 }
 
 DownloadVideos () {
-	echo "######################################### DOWNLOADING VIDEOS #########################################"
+	echo "############################################ DOWNLOADING VIDEOS"
 	wantit=$(curl -s --header "X-Api-Key:"${LidarrAPIkey} --request GET  "$LidarrUrl/api/v1/Artist/")
 	wantedtotal=$(echo "${wantit}"|jq -r '.[].sortName' | wc -l)
 	MBArtistID=($(echo "${wantit}" | jq -r ".[].foreignArtistId"))
@@ -647,7 +647,7 @@ DownloadVideos () {
 		touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
 	done
 	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "*.$extension" | wc -l)
-	echo "######################################### $totaldownloadcount VIDEOS DOWNLOADED #########################################"
+	echo "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
 }
 
 VideoNFOWriter () {
@@ -1070,6 +1070,8 @@ TidalVideoDownloads () {
 			chown abc:abc "$newvideofilename.mkv"
 		done
 	done
+	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "*.mkv" | wc -l)
+	echo "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
 }
 
 Configuration
