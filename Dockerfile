@@ -2,7 +2,7 @@ FROM lsiobase/ubuntu:focal
 LABEL maintainer="RandomNinjaAtk"
 
 ENV TITLE="Automated Music Video Downloader"
-ENV VERSION="1.0.1"
+ENV VERSION="1.0.2"
 ENV MBRAINZMIRROR="https://musicbrainz.org"
 ENV SMA_PATH /usr/local/sma
 
@@ -29,7 +29,7 @@ RUN \
 	curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl && \
 	chmod a+rx /usr/local/bin/youtube-dl && \
 	echo "************ install mp4 tagging software ************" && \
-	pip3 install --no-cache-dir -U \
+	python3 -m pip install --no-cache-dir -U \
 		mutagen \
 		tidal-dl && \
 	echo "************ setup SMA ************" && \
