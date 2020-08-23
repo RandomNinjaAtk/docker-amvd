@@ -1,8 +1,8 @@
 # AMVD - Automated Music Video Downloader 
-![Docker Build](https://img.shields.io/docker/cloud/automated/randomninjaatk/amvd?style=flat-square)
-![Docker Pulls](https://img.shields.io/docker/pulls/randomninjaatk/amvd?style=flat-square)
-![Docker Stars](https://img.shields.io/docker/stars/randomninjaatk/amvd?style=flat-square)
-[![Docker Hub](https://img.shields.io/badge/Open%20On-DockerHub-blue)](https://hub.docker.com/r/randomninjaatk/amvd)
+[![Docker Build](https://img.shields.io/docker/cloud/automated/randomninjaatk/amvd?style=flat-square)](https://hub.docker.com/r/randomninjaatk/amvd)
+[![Docker Pulls](https://img.shields.io/docker/pulls/randomninjaatk/amvd?style=flat-square)](https://hub.docker.com/r/randomninjaatk/amvd)
+[![Docker Stars](https://img.shields.io/docker/stars/randomninjaatk/amvd?style=flat-square)](https://hub.docker.com/r/randomninjaatk/amvd)
+[![Docker Hub](https://img.shields.io/badge/Open%20On-DockerHub-blue?style=flat-square)](https://hub.docker.com/r/randomninjaatk/amvd)
 [![Discord](https://img.shields.io/discord/747100476775858276.svg?style=flat-square&label=Discord&logo=discord)](https://discord.gg/JumQXDc "realtime support / chat with the community." )
 
 [RandomNinjaAtk/amvd](https://github.com/RandomNinjaAtk/docker-amvd) is a Lidarr companion script to automatically download and tag Music Videos for use in other video applications (plex/kodi/jellyfin/emby) 
