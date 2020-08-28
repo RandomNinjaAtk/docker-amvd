@@ -8,9 +8,9 @@ Configuration () {
 	echo "kill -9 $processdownloadid"
 	echo ""
 	echo ""
-	sleep 5
-
-	echo "############################################ SCRIPT VERSION 1.1.6"
+	sleep 2
+	echo "############################################ $TITLE"
+	echo "############################################ SCRIPT VERSION 1.1.7"
 	echo "############################################ DOCKER VERSION $VERSION"
 	echo "############################################ CONFIGURATION VERIFICATION"
 	error=0
