@@ -2,14 +2,14 @@ FROM lsiobase/ubuntu:focal
 LABEL maintainer="RandomNinjaAtk"
 
 ENV TITLE="Automated Music Video Downloader"
-ENV VERSION="1.0.3"
+ENV VERSION="1.0.4"
 ENV MBRAINZMIRROR="https://musicbrainz.org"
-ENV SMA_PATH /usr/local/sma
 
 RUN \
 	echo "************ install dependencies ************" && \
-	echo "************ install packages ************" && \
+	echo "************ install & upgrade packages ************" && \
 	apt-get update -y && \
+	apt-get upgrade -y && \
 	apt-get install -y --no-install-recommends \
 		jq \
 		python3 \
@@ -28,10 +28,10 @@ RUN \
 		mutagen \
 		tidal-dl
 
-WORKDIR /
-
 # copy local files
 COPY root/ /
+
+WORKDIR /config
 
 # ports and volumes
 VOLUME /config
