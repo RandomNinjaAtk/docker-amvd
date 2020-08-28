@@ -10,7 +10,7 @@ Configuration () {
 	echo ""
 	sleep 5
 
-	echo "############################################ SCRIPT VERSION 1.1.5"
+	echo "############################################ SCRIPT VERSION 1.1.6"
 	echo "############################################ DOCKER VERSION $VERSION"
 	echo "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -39,19 +39,24 @@ Configuration () {
 		fi
 	fi
 
-	# verify LIBRARY
-	if [ ! -z "$LIBRARY" ]; then
+	# verify downloads location
+	if [ -d "/downloads-amvd" ]; then
+		LIBRARY="/downloads-amvd"
 		echo "Music Video Library Location: $LIBRARY"
 	else
-		echo "ERROR: LIBRARY setting invalid, currently set to: $LIBRARY"
-		echo "ERROR: LIBRARY Expected Valid Setting: /your/path/to/music/video/folder"
-		error=1
-	fi
-	if [ ! -d "$LIBRARY" ]; then
-		echo "ERROR: LIBRARY setting invalid, currently set to: $LIBRARY"
-		echo "ERROR: The LIBRARY Folder does not exist, create the folder accordingly to resolve error"
-		echo "HINT: Check the path using the container CLI to verify it exists, command: ls \"$LIBRARY\""
-		error=1
+		if [ ! -z "$LIBRARY" ]; then
+			echo "Music Video Library Location: $LIBRARY"
+			if [ ! -d "$LIBRARY" ]; then
+				echo "ERROR: LIBRARY setting invalid, currently set to: $LIBRARY"
+				echo "ERROR: The LIBRARY Folder does not exist, create the folder accordingly to resolve error"
+				echo "HINT: Check the path using the container CLI to verify it exists, command: ls \"$LIBRARY\""
+				error=1
+			fi
+		else
+			echo "ERROR: Music Video Library Location Not Found! (/downloads-amvd)"
+			echo "ERROR: To correct error, please add a \"/downloads-amvd\" volume"
+			error=1
+		fi
 	fi
 
 	if [ "$usetidal" == "true" ]; then
@@ -1081,7 +1086,7 @@ TidalVideoDownloads () {
 			else
 				if ! [ -f "/config/logs/musicbrainzerror.log" ]; then
 					touch "/config/logs/musicbrainzerror.log"
-				fi		
+				fi
 				if [ -f "/config/logs/musicbrainzerror.log" ]; then
 					echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: ERROR: musicbrainz id: $mbid is missing Tidal Artist link, see: \"/config/logs/musicbrainzerror.log\" for more detail..."
 					if cat "/config/logs/musicbrainzerror.log" | grep "/$mbid/" | read; then
@@ -1094,7 +1099,7 @@ TidalVideoDownloads () {
 		else
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: Videos already downloaded, skipping.."
 			continue
-		fi		
+		fi
 	done
 	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "*.mkv" | wc -l)
 	echo "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
