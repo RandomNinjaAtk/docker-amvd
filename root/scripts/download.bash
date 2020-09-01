@@ -1114,7 +1114,7 @@ TidalVideoDownloads () {
 				for id in ${!videolistbysize[@]}; do
 					currentprocess=$(( $id ))
 					currentprocessplusone=$(( $id + 1 ))
-					videofilename="$LIBRARY/${videolistbysize[$id]}"
+					videofilename="$destination/${videolistbysize[$id]}"
 					newvideofilename="$(echo "$videofilename" | sed -e 's/ ([0-9]*).mkv$//')"
 					if [[ -e $newvideofilename.mkv || -L $newvideofilename.mkv ]] ; then
 						i=1
