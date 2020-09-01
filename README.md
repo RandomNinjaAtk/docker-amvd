@@ -72,6 +72,7 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-v /config` | Configuration files for Lidarr. |
 | `-v /downloads-amvd` | Location of music videos, also add a volume to match the location |
 | `-e AUTOSTART="true"` | true = Enabled :: Runs script automatically on startup |
+| `-e SCRIPTINTERVAL=1h` | #s or #m or #h or #d :: s = seconds, m = minutes, h = hours, d = days :: Amount of time between each script run, when AUTOSTART is enabled |
 | `-e LidarrUrl="http://127.0.0.1:8686"` | Set domain or IP to your Lidarr instance including port. If using reverse proxy, do not use a trailing slash. Ensure you specify http/s. |
 | `-e LidarrAPIkey="08d108d108d108d108d108d108d108d1"` | Lidarr API key. |
 | `-e MBRAINZMIRROR="https://musicbrainz.org"` | OPTIONAL :: Only change if using a different mirror |
@@ -102,6 +103,7 @@ docker create \
   -e PUID=1000 \
   -e PGID=1000 \
   -e AUTOSTART=true \
+  -e SCRIPTINTERVAL=1h \
   -e usetidal=false \
   -e tidalusername=TIDALUSERNAME \
   -e tidalpassword=TIDALPASSWORD \
@@ -136,6 +138,7 @@ services:
       - PUID=1000
       - PGID=1000
       - AUTOSTART=true
+      - SCRIPTINTERVAL=1h
       - usetidal=false
       - tidalusername=TIDALUSERNAME
       - tidalpassword=TIDALPASSWORD
