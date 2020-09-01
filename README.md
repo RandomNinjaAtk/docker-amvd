@@ -86,7 +86,9 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e subtitlelanguage="en"` | Desired Language Code :: For guidence, please see youtube-dl documentation. |
 | `-e videofilter="live"` | This will filter out videos Matching MusicBrainz secondary release type and album disambiguation (single word only) |
 | `-e WriteNFOs="false"` | true = enabled :: Create NFO and Local Thumbnail for use in applications such as Kodi |
+| `-e USEFOLDERS=false` | true = enabled :: Creates subfolders using the Lidarr Artist folder name |
 | `-e FilePermissions=666` | Based on chmod linux permissions |
+| `-e FolderPermissions=755` | Based on chmod linux permissions |
 | `-e extension="mkv"` | mkv or mp4 :: Set to the desired output format... |
 
 ## Usage
@@ -111,7 +113,9 @@ docker create \
   -e videoformat="--format bestvideo[vcodec*=avc1]+bestaudio" \
   -e subtitlelanguage=en \
   -e videofilter=live \
+  -e USEFOLDERS=false \
   -e FilePermissions=666 \
+  -e FolderPermissions=755 \
   -e MBRAINZMIRROR=https://musicbrainz.org \
   -e MBRATELIMIT=1 \
   -e LidarrUrl=http://127.0.0.1:8686 \
@@ -146,7 +150,9 @@ services:
       - videoformat="--format bestvideo[vcodec*=avc1]+bestaudio"
       - subtitlelanguage=en
       - videofilter=live
+      - USEFOLDERS=false
       - FilePermissions=666
+      - FolderPermissions=755
       - MBRAINZMIRROR=https://musicbrainz.org
       - MBRATELIMIT=1
       - LidarrUrl=http://127.0.0.1:8686
