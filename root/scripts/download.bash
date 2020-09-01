@@ -10,11 +10,22 @@ Configuration () {
 	echo ""
 	sleep 2
 	echo "############################################ $TITLE"
-	echo "############################################ SCRIPT VERSION 1.1.7"
+	echo "############################################ SCRIPT VERSION 1.1.9"
 	echo "############################################ DOCKER VERSION $VERSION"
 	echo "############################################ CONFIGURATION VERIFICATION"
 	error=0
-
+	
+	if [ "$AUTOSTART" == "true" ]; then
+		echo "$TITLESHORT Script Autostart: ENABLED"
+		if [ -z "$SCRIPTINTERVAL" ]; then
+			echo "WARNING: $TITLESHORT Script Interval not set! Using default..."
+			SCRIPTINTERVAL="15m"
+		fi
+		echo "$TITLESHORT Script Interval: $SCRIPTINTERVAL"
+	else
+		echo "$TITLESHORT Script Autostart: DISABLED"
+	fi
+	
 	# Verify Musicbrainz DB Connectivity
 	musicbrainzdbtest=$(curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/artist/f59c5520-5f46-4d2c-b2c4-822eabf53419?fmt=json")
 	musicbrainzdbtestname=$(echo "${musicbrainzdbtest}"| jq -r '.name')
@@ -904,7 +915,7 @@ VideoDownload () {
 	if [[ ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" || ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]]; then
 		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
 		echo "=======================START YOUTUBE-DL========================="
-		python3 /usr/local/bin/youtube-dl -v ${cookies} -o "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
+		youtube-dl ${cookies} -o "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
 		echo "========================STOP YOUTUBE-DL========================="
 		if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
@@ -1111,6 +1122,11 @@ if [ "$usetidal" == "true" ]; then
 	TidalVideoDownloads
 else
 	DownloadVideos
+fi
+
+echo "############################################ SCRIPT COMPLETE"
+if [ "$AUTOSTART" == "true" ]; then
+	echo "############################################ SCRIPT SLEEPING FOR $SCRIPTINTERVAL"
 fi
 
 exit 0
