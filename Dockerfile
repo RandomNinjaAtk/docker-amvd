@@ -1,8 +1,9 @@
 FROM lsiobase/ubuntu:focal
 LABEL maintainer="RandomNinjaAtk"
 
-ENV TITLE="Automated Music Video Downloader"
-ENV VERSION="1.0.4"
+ENV TITLE="Automated Music Video Downloader (AMVD)"
+ENV TITLESHORT="AMVD"
+ENV VERSION="1.0.5"
 ENV MBRAINZMIRROR="https://musicbrainz.org"
 
 RUN \
@@ -20,11 +21,9 @@ RUN \
 		/tmp/* \
 		/var/lib/apt/lists/* \
 		/var/tmp/* && \
-	echo "************ install youtube-dl ************" && \
-	curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl && \
-	chmod a+rx /usr/local/bin/youtube-dl && \
 	echo "************ install python packages ************" && \
 	python3 -m pip install --no-cache-dir -U \
+		youtube_dl \
 		mutagen \
 		tidal-dl
 
