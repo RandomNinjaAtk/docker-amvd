@@ -1,5 +1,6 @@
 #!/usr/bin/with-contenv bash
 agent="automated-music-video-downloader ( https://github.com/RandomNinjaAtk/docker-amvd )"
+
 Configuration () {
 	processstartid="$(ps -A -o pid,cmd|grep "start.bash" | grep -v grep | head -n 1 | awk '{print $1}')"
 	processdownloadid="$(ps -A -o pid,cmd|grep "download.bash" | grep -v grep | head -n 1 | awk '{print $1}')"
@@ -10,7 +11,7 @@ Configuration () {
 	echo ""
 	sleep 2
 	echo "############################################ $TITLE"
-	echo "############################################ SCRIPT VERSION 1.1.9"
+	echo "############################################ SCRIPT VERSION 1.1.10"
 	echo "############################################ DOCKER VERSION $VERSION"
 	echo "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -141,12 +142,33 @@ Configuration () {
 		echo "Music Video Extension: $extension"
 
 	fi
+	
+	if [ ! -z "$USEFOLDERS" ]; then
+		if [ "$USEFOLDERS" == "true" ]; then
+			echo "Music Video Use Folders: ENABLED"
+		else
+			echo "Music Video Use Folders: DISABLED"
+		fi
+	else
+		echo "WARNING: USEFOLDERS not set, using default..."
+		USEFOLDERS="false"
+		echo "Music Video Use Folders:: DISABLED"
+	fi
+	
+	if [ ! -z "$FolderPermissions" ]; then
+		echo "Music Video Foldder Permissions: $FolderPermissions"
+	else
+		echo "WARNING: FolderPermissions not set, using default..."
+		FolderPermissions="755"
+		echo "Music Video Foldder Permissions: $FolderPermissions"
+	fi
 
+	
 	if [ ! -z "$FilePermissions" ]; then
 		echo "Music Video File Permissions: $FilePermissions"
 	else
 		echo "ERROR: FilePermissions not set, using default..."
-		FilePermissions="666"
+		FilePermissions="644"
 		echo "Music Video File Permissions: $FilePermissions"
 	fi
 
@@ -1055,6 +1077,9 @@ TidalVideoDownloads () {
 		mbzartistinfo="$(cat "/config/cache/$sanatizedartistname-$mbid-info.json")"
 		tidalurl="$(echo "$mbzartistinfo" | jq -r ".relations | .[] | .url | select(.resource | contains(\"tidal\")) | .resource")"
 		tidalartistid="$(echo "$tidalurl" | grep -o '[[:digit:]]*')"
+		LidArtistPath="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .path")"
+		LidArtistFolderName="$(basename "${LidArtistPath}")"
+		
 		if [ -f "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" ]; then
 			if ! [[ $(find "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" -mtime +7 -print) ]]; then
 				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: Videos already downloaded according to cache, skipping..."
@@ -1066,9 +1091,21 @@ TidalVideoDownloads () {
 		if [ ! -f "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" ]; then
 			if [ ! -z "$tidalurl" ]; then
 				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $tidalurl :: $tidalartistid"
-				python3 /config/scripts/tvd.py "$tidalartistid" "$LidArtistNameCap" "$LIBRARY"
+				if [ "$USEFOLDERS" == "true" ]; then
+					destination="$LIBRARY/$LidArtistFolderName"
+					if [ ! -d "$destination" ]; then
+						mkdir -p "$destination"
+						chmod $FolderPermissions "$destination"
+						chown abc:abc "$destination"
+					fi
+				else
+					destination="$LIBRARY"
+				fi
+				
+				
+				python3 /config/scripts/tvd.py "$tidalartistid" "$LidArtistNameCap" "$destination"
 				WORKINGDIR="${PWD}"
-				cd "$LIBRARY"
+				cd "$destination"
 				OLDIFS="$IFS"
 				IFS=$'\n'
 				videolistbysize=($(find . -type f -iregex ".*\ ([0-9]*).mkv" | sort -u))
