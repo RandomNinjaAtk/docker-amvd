@@ -11,7 +11,7 @@ Configuration () {
 	echo ""
 	sleep 2
 	echo "############################################ $TITLE"
-	echo "############################################ SCRIPT VERSION 1.1.10"
+	echo "############################################ SCRIPT VERSION 1.1.11"
 	echo "############################################ DOCKER VERSION $VERSION"
 	echo "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -146,6 +146,13 @@ Configuration () {
 	if [ ! -z "$USEFOLDERS" ]; then
 		if [ "$USEFOLDERS" == "true" ]; then
 			echo "Music Video Use Folders: ENABLED"
+			if [ ! -z "$FolderPermissions" ]; then
+				echo "Music Video Foldder Permissions: $FolderPermissions"
+			else
+				echo "WARNING: FolderPermissions not set, using default..."
+				FolderPermissions="755"
+				echo "Music Video Foldder Permissions: $FolderPermissions"
+			fi
 		else
 			echo "Music Video Use Folders: DISABLED"
 		fi
@@ -154,15 +161,6 @@ Configuration () {
 		USEFOLDERS="false"
 		echo "Music Video Use Folders:: DISABLED"
 	fi
-	
-	if [ ! -z "$FolderPermissions" ]; then
-		echo "Music Video Foldder Permissions: $FolderPermissions"
-	else
-		echo "WARNING: FolderPermissions not set, using default..."
-		FolderPermissions="755"
-		echo "Music Video Foldder Permissions: $FolderPermissions"
-	fi
-
 	
 	if [ ! -z "$FilePermissions" ]; then
 		echo "Music Video File Permissions: $FilePermissions"
@@ -193,7 +191,7 @@ CacheEngine () {
 		artistnumber=$(( $id + 1 ))
 		mbid="${MBArtistID[$id]}"
 		LidArtistNameCap="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .artistName")"
-		sanatizedartistname="$(echo "${LidArtistNameCap}" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/')"
+		sanatizedartistname="$(echo "${LidArtistNameCap}"  |  sed -e "s%[^A-Za-z0-9._()'\ -]%%g" -e "s/  */ /g")"
 	if  [ "$LidArtistNameCap" == "Various Artists" ]; then
 		echo "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Skipping, not processed by design..."
 		continue
@@ -448,9 +446,10 @@ DownloadVideos () {
 
 
 
-		LidArtistPath="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .path")"
+		LidArtistPath="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .path")"LidArtistPath="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .path")"
+		LidArtistFolderName="$(basename "${LidArtistPath}")"
 		LidArtistNameCap="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .artistName")"
-		sanatizedartistname="$(echo "${LidArtistNameCap}" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/')"
+		sanatizedartistname="$(echo "${LidArtistFolderName}" | sed 's% (.*)$%%g')"
 
 		if  [ "$LidArtistNameCap" == "Various Artists" ]; then
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping, not processed by design..."
@@ -491,7 +490,7 @@ DownloadVideos () {
 				videodirectors="$(echo "$imvdbvideodata" | jq -r ".directors[] | .entity_name")"
 				videoimage="$(echo "$imvdbvideodata" | jq -r ".image.o")"
 				videoyear="$(echo "$imvdbvideodata" | jq -r ".year")"
-				santizevideotitle="$(echo "$imvdbvideotitle" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/')"
+				santizevideotitle="$(echo "$imvdbvideotitle"  |  sed -e "s%[^A-Za-z0-9._()'\ -]%%g" -e "s/  */ /g")"
 				youtubeid="$(echo "$imvdbvideodata" | jq -r ".sources[] | select(.source==\"youtube\") | .source_data" | head -n 1)"
 				youtubeurl="https://www.youtube.com/watch?v=$youtubeid"
 				if ! [ -f "/config/logs/download.log" ]; then
@@ -534,11 +533,11 @@ DownloadVideos () {
 				if [ "WriteNFOs" == "true" ]; then
 					VideoNFOWriter
 				else
-					if find "$LIBRARY" -type f -iname "*.jpg" | read; then
-						rm "$LIBRARY"/*.jpg
+					if find "$destination" -type f -iname "*.jpg" | read; then
+						rm "$destination"/*.jpg
 					fi
-					if find "$LIBRARY" -type f -iname "*.nfo" | read; then
-						rm "$LIBRARY"/*.nfo
+					if find "$destination" -type f -iname "*.nfo" | read; then
+						rm "$destination"/*.nfo
 					fi
 				fi
 
@@ -571,7 +570,7 @@ DownloadVideos () {
 		if [ $videocount = 0 ]; then
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping..."
 			if [ ! -z "$imvdburl" ]; then
-				downloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mp4" | wc -l)
+				downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mp4" | wc -l)
 				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
 				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
 				touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
@@ -587,7 +586,7 @@ DownloadVideos () {
 		if [ $videocount = 0 ]; then
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping..."
 			if [ ! -z "$imvdburl" ]; then
-				downloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mp4" | wc -l)
+				downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mp4" | wc -l)
 				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
 				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
 				touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
@@ -603,8 +602,8 @@ DownloadVideos () {
 			videotitlelowercase="$(echo ${videotitle,,})"
 			videodisambiguation="$(echo "$videorecordsfile" | jq -r "select(.id==\"$mbrecordid\") | .disambiguation")"
 			dlurl=($(echo "$videorecordsfile" | jq -r "select(.id==\"$mbrecordid\") | .relations | .[] | .url | .resource" | sort -u))
-			sanitizevideotitle="$(echo "${videotitle}" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/')"
-			sanitizedvideodisambiguation="$(echo "${videodisambiguation}" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/')"
+			sanitizevideotitle="$(echo "${videotitle}"  |  sed -e "s%[^A-Za-z0-9._()'\ -]%%g" -e "s/  */ /g")"
+			sanitizedvideodisambiguation="$(echo "${videodisambiguation}"  |  sed -e "s%[^A-Za-z0-9._()'\ -]%%g" -e "s/  */ /g")"
 			if ! [ -f "/config/logs/download.log" ]; then
 				touch "/config/logs/download.log"
 			fi
@@ -669,29 +668,29 @@ DownloadVideos () {
 				if [ "WriteNFOs" == "true" ]; then
 					VideoNFOWriter
 				else
-					if find "$LIBRARY" -type f -iname "*.jpg" | read; then
-						rm "$LIBRARY"/*.jpg
+					if find "$destination" -type f -iname "*.jpg" | read; then
+						rm "$destination"/*.jpg
 					fi
-					if find "$LIBRARY" -type f -iname "*.nfo" | read; then
-						rm "$LIBRARY"/*.nfo
+					if find "$destination" -type f -iname "*.nfo" | read; then
+						rm "$destination"/*.nfo
 					fi
 				fi
 
 			done
 		done
-		downloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.$extension" | wc -l)
+		downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.$extension" | wc -l)
 		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
 		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
 		touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
 	done
-	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "*.$extension" | wc -l)
+	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 2 -type f -iname "*.$extension" | wc -l)
 	echo "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
 }
 
 VideoNFOWriter () {
 
-	if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
-		if [ ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.nfo" ]; then
+	if [ -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
+		if [ ! -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.nfo" ]; then
 			if [ "$videoyear" != "null" ]; then
 				year="$videoyear"
 			else
@@ -702,7 +701,7 @@ VideoNFOWriter () {
 			else
 				album=""
 			fi
-			if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" ]; then
+			if [ -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" ]; then
 				thumb="$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
 			else
 				thumb=""
@@ -740,7 +739,7 @@ VideoNFOWriter () {
 				track=""
 			fi
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
-cat <<EOF > "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.nfo"
+cat <<EOF > "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.nfo"
 <musicvideo>
 	<title>${videotitle}${nfovideodisambiguation}</title>
 	<userrating>$youtubeaveragerating</userrating>
@@ -884,7 +883,7 @@ VideoMatch () {
 				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: Track $releasetrackposition :: $releasetracktitle :: $releasegrouptitle :: $releasestatus :: $releasecountry :: $releasegroupstatus :: $releasegroupyear"
 				videotrackposition="$releasetrackposition"
 				videotitle="$releasetracktitle"
-				sanitizevideotitle="$(echo "$videotitle" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/')"
+				sanitizevideotitle="$(echo "$videotitle"  |  sed -e "s%[^A-Za-z0-9._()'\ -]%%g" -e "s/  */ /g")"
 				videoyear="$releasegroupyear"
 				videoalbum="$releasegrouptitle"
 				videogenres="$(echo "$releasegroupgenres" | sed -e "s/\b\(.\)/\u\1/g")"
@@ -934,16 +933,28 @@ VideoDownload () {
 	else
 		track=""
 	fi
-	if [[ ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" || ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]]; then
+	
+	if [ "$USEFOLDERS" == "true" ]; then
+		destination="$LIBRARY/$LidArtistFolderName"
+		if [ ! -d "$destination" ]; then
+			mkdir -p "$destination"
+			chmod $FolderPermissions "$destination"
+			chown abc:abc "$destination"
+		fi
+	else
+		destination="$LIBRARY"
+	fi
+	
+	if [[ ! -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" || ! -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]]; then
 		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
 		echo "=======================START YOUTUBE-DL========================="
-		youtube-dl ${cookies} -o "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
+		youtube-dl ${cookies} -o "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
 		echo "========================STOP YOUTUBE-DL========================="
-		if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
+		if [ -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
 			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
-			audiochannels="$(ffprobe -v quiet -print_format json -show_streams "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels")"
-			width="$(ffprobe -v quiet -print_format json -show_streams "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
-			height="$(ffprobe -v quiet -print_format json -show_streams "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
+			audiochannels="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels")"
+			width="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
+			height="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
 			if [[ "$width" -ge "3800" || "$height" -ge "2100" ]]; then
 				videoquality=3
 				qualitydescription="UHD"
@@ -968,14 +979,14 @@ VideoDownload () {
 			fi
 
 			if [ ! -z "$videoimage" ]; then
-				curl -s "$videoimage" -o "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+				curl -s "$videoimage" -o "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
 			fi
 
-			if [ ! -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" ]; then
+			if [ ! -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" ]; then
 				ffmpeg -y \
-					-i "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
+					-i "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
 					-vframes 1 -an -s 640x360 -ss 30 \
-					"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" &> /dev/null
+					"$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" &> /dev/null
 			fi
 
 			if [ "$extension" == "mkv" ]; then
@@ -986,13 +997,13 @@ VideoDownload () {
 					mkvdirectormetadata=""
 				fi
 				echo "========================START MKVPROPEDIT========================"
-				mkvpropedit "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" --add-track-statistics-tags
+				mkvpropedit "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" --add-track-statistics-tags
 				echo "========================STOP MKVPROPEDIT========================="
-				mv "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" "$LIBRARY/temp.mkv"
-				cp "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$LIBRARY/cover.jpg"
+				mv "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" "$destination/temp.mkv"
+				cp "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$destination/cover.jpg"
 				echo "========================START FFMPEG========================"
 				ffmpeg -y \
-					-i "$LIBRARY/temp.mkv" \
+					-i "$destination/temp.mkv" \
 					-c copy \
 					-metadata TITLE="${videotitle}${nfovideodisambiguation}" \
 					-metadata ARTIST="$LidArtistNameCap" \
@@ -1004,34 +1015,34 @@ VideoDownload () {
 					$mkvdirectormetadata \
 					-metadata:s:v:0 title="$qualitydescription" \
 					-metadata:s:a:0 title="$audiodescription" \
-					-attach "$LIBRARY/cover.jpg" -metadata:s:t mimetype=image/jpeg \
-					"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+					-attach "$destination/cover.jpg" -metadata:s:t mimetype=image/jpeg \
+					"$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
 				echo "========================STOP FFMPEG========================="
-				rm "$LIBRARY/cover.jpg"
-				rm "$LIBRARY/temp.mkv"
-				chmod $FilePermissions "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+				rm "$destination/cover.jpg"
+				rm "$destination/temp.mkv"
+				chmod $FilePermissions "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
 			fi
 
 			if [ "$extension" == "mp4" ]; then
 
-				if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
+				if [ -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
 					echo "========================START FFMPEG========================"
 					ffmpeg -y \
-						-i "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
+						-i "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
 						-c copy \
 						-metadata:s:v:0 title="$qualitydescription" \
 						-metadata:s:a:0 title="$audiodescription" \
 						-movflags faststart \
 						-strict -2 \
-						"$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
+						"$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
 					echo "========================STOP FFMPEG========================="
 				fi
 
-				if [ -f "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
-					rm "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+				if [ -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
+					rm "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
 					echo "========================START TAGGING========================"
 					python3 /config/scripts/tag.py \
-						--file "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
+						--file "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
 						--songtitle "${videotitle}${nfovideodisambiguation}" \
 						--songalbum "$album" \
 						--songartist "$LidArtistNameCap" \
@@ -1040,10 +1051,10 @@ VideoDownload () {
 						--songgenre "$genre" \
 						--songdate "$year" \
 						--quality "$videoquality" \
-						--songartwork "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+						--songartwork "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
 						echo "========================STOP TAGGING========================="
 				fi
-				chmod $FilePermissions "$LIBRARY/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
+				chmod $FilePermissions "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
 			fi
 
 			# reset language
@@ -1073,12 +1084,12 @@ TidalVideoDownloads () {
 		artistnumber=$(( $id + 1 ))
 		mbid="${MBArtistID[$id]}"
 		LidArtistNameCap="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .artistName")"
-		sanatizedartistname="$(echo "${LidArtistNameCap}" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/')"
 		mbzartistinfo="$(cat "/config/cache/$sanatizedartistname-$mbid-info.json")"
 		tidalurl="$(echo "$mbzartistinfo" | jq -r ".relations | .[] | .url | select(.resource | contains(\"tidal\")) | .resource")"
 		tidalartistid="$(echo "$tidalurl" | grep -o '[[:digit:]]*')"
 		LidArtistPath="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .path")"
 		LidArtistFolderName="$(basename "${LidArtistPath}")"
+		sanatizedartistname="$(echo "${LidArtistFolderName}" | sed 's% (.*)$%%g')"
 		
 		if [ -f "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" ]; then
 			if ! [[ $(find "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" -mtime +7 -print) ]]; then
@@ -1149,7 +1160,7 @@ TidalVideoDownloads () {
 			continue
 		fi
 	done
-	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 1 -type f -iname "*.mkv" | wc -l)
+	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 2 -type f -iname "*.mkv" | wc -l)
 	echo "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
 }
 
