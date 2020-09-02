@@ -87,7 +87,7 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e videofilter="live"` | This will filter out videos Matching MusicBrainz secondary release type and album disambiguation (single word only) |
 | `-e WriteNFOs="false"` | true = enabled :: Create NFO and Local Thumbnail for use in applications such as Kodi |
 | `-e USEFOLDERS=false` | true = enabled :: Creates subfolders using the Lidarr Artist folder name |
-| `-e FilePermissions=666` | Based on chmod linux permissions |
+| `-e FilePermissions=644` | Based on chmod linux permissions |
 | `-e FolderPermissions=755` | Based on chmod linux permissions |
 | `-e extension="mkv"` | mkv or mp4 :: Set to the desired output format... |
 
@@ -114,7 +114,7 @@ docker create \
   -e subtitlelanguage=en \
   -e videofilter=live \
   -e USEFOLDERS=false \
-  -e FilePermissions=666 \
+  -e FilePermissions=644 \
   -e FolderPermissions=755 \
   -e MBRAINZMIRROR=https://musicbrainz.org \
   -e MBRATELIMIT=1 \
@@ -151,7 +151,7 @@ services:
       - subtitlelanguage=en
       - videofilter=live
       - USEFOLDERS=false
-      - FilePermissions=666
+      - FilePermissions=644
       - FolderPermissions=755
       - MBRAINZMIRROR=https://musicbrainz.org
       - MBRATELIMIT=1
