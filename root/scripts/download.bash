@@ -11,7 +11,7 @@ Configuration () {
 	echo ""
 	sleep 2
 	echo "############################################ $TITLE"
-	echo "############################################ SCRIPT VERSION 1.1.11"
+	echo "############################################ SCRIPT VERSION 1.1.12"
 	echo "############################################ DOCKER VERSION $VERSION"
 	echo "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -191,7 +191,7 @@ CacheEngine () {
 		artistnumber=$(( $id + 1 ))
 		mbid="${MBArtistID[$id]}"
 		LidArtistNameCap="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .artistName")"
-		sanatizedartistname="$(echo "${LidArtistNameCap}"  |  sed -e "s%[^A-Za-z0-9._()'\ -]%%g" -e "s/  */ /g")"
+		sanatizedartistname="$(echo "${LidArtistNameCap}"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]%%g" -e "s/  */ /g")"
 	if  [ "$LidArtistNameCap" == "Various Artists" ]; then
 		echo "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Skipping, not processed by design..."
 		continue
@@ -490,7 +490,7 @@ DownloadVideos () {
 				videodirectors="$(echo "$imvdbvideodata" | jq -r ".directors[] | .entity_name")"
 				videoimage="$(echo "$imvdbvideodata" | jq -r ".image.o")"
 				videoyear="$(echo "$imvdbvideodata" | jq -r ".year")"
-				santizevideotitle="$(echo "$imvdbvideotitle"  |  sed -e "s%[^A-Za-z0-9._()'\ -]%%g" -e "s/  */ /g")"
+				santizevideotitle="$(echo "$imvdbvideotitle"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]%%g" -e "s/  */ /g")"
 				youtubeid="$(echo "$imvdbvideodata" | jq -r ".sources[] | select(.source==\"youtube\") | .source_data" | head -n 1)"
 				youtubeurl="https://www.youtube.com/watch?v=$youtubeid"
 				if ! [ -f "/config/logs/download.log" ]; then
@@ -602,8 +602,8 @@ DownloadVideos () {
 			videotitlelowercase="$(echo ${videotitle,,})"
 			videodisambiguation="$(echo "$videorecordsfile" | jq -r "select(.id==\"$mbrecordid\") | .disambiguation")"
 			dlurl=($(echo "$videorecordsfile" | jq -r "select(.id==\"$mbrecordid\") | .relations | .[] | .url | .resource" | sort -u))
-			sanitizevideotitle="$(echo "${videotitle}"  |  sed -e "s%[^A-Za-z0-9._()'\ -]%%g" -e "s/  */ /g")"
-			sanitizedvideodisambiguation="$(echo "${videodisambiguation}"  |  sed -e "s%[^A-Za-z0-9._()'\ -]%%g" -e "s/  */ /g")"
+			sanitizevideotitle="$(echo "${videotitle}"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]%%g" -e "s/  */ /g")"
+			sanitizedvideodisambiguation="$(echo "${videodisambiguation}"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]%%g" -e "s/  */ /g")"
 			if ! [ -f "/config/logs/download.log" ]; then
 				touch "/config/logs/download.log"
 			fi
@@ -883,7 +883,7 @@ VideoMatch () {
 				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: Track $releasetrackposition :: $releasetracktitle :: $releasegrouptitle :: $releasestatus :: $releasecountry :: $releasegroupstatus :: $releasegroupyear"
 				videotrackposition="$releasetrackposition"
 				videotitle="$releasetracktitle"
-				sanitizevideotitle="$(echo "$videotitle"  |  sed -e "s%[^A-Za-z0-9._()'\ -]%%g" -e "s/  */ /g")"
+				sanitizevideotitle="$(echo "$videotitle"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]%%g" -e "s/  */ /g")"
 				videoyear="$releasegroupyear"
 				videoalbum="$releasegrouptitle"
 				videogenres="$(echo "$releasegroupgenres" | sed -e "s/\b\(.\)/\u\1/g")"
@@ -1082,10 +1082,17 @@ TidalVideoDownloads () {
 
 	for id in ${!MBArtistID[@]}; do
 		artistnumber=$(( $id + 1 ))
+		tidalurl=""
 		mbid="${MBArtistID[$id]}"
-		LidArtistNameCap="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .artistName")"
-		mbzartistinfo="$(cat "/config/cache/$sanatizedartistname-$mbid-info.json")"
-		tidalurl="$(echo "$mbzartistinfo" | jq -r ".relations | .[] | .url | select(.resource | contains(\"tidal\")) | .resource")"
+		lidarrartistdata=$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\")")
+		LidArtistNameCap="$(echo "$lidarrartistdata" | jq -r ".artistName")"
+		tidalurl=$(echo "$lidarrartistdata" | jq -r '.links | .[] | select(.name=="tidal") | .url')
+		if [ -z "$tidalurl" ]; then 
+			echo "Tidal URL not found on Lidarr, using musicbrainz backup"
+			mbzartistinfo=$(curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/artist/$mbid?inc=url-rels+genres&fmt=json")
+			tidalurl="$(echo "$mbzartistinfo" | jq -r ".relations | .[] | .url | select(.resource | contains(\"tidal\")) | .resource")"
+			sleep $MBRATELIMIT
+		fi
 		tidalartistid="$(echo "$tidalurl" | grep -o '[[:digit:]]*')"
 		LidArtistPath="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .path")"
 		LidArtistFolderName="$(basename "${LidArtistPath}")"
@@ -1165,10 +1172,10 @@ TidalVideoDownloads () {
 }
 
 Configuration
-CacheEngine
 if [ "$usetidal" == "true" ]; then
 	TidalVideoDownloads
 else
+	CacheEngine
 	DownloadVideos
 fi
 
