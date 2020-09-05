@@ -4,49 +4,49 @@ agent="automated-music-video-downloader ( https://github.com/RandomNinjaAtk/dock
 Configuration () {
 	processstartid="$(ps -A -o pid,cmd|grep "start.bash" | grep -v grep | head -n 1 | awk '{print $1}')"
 	processdownloadid="$(ps -A -o pid,cmd|grep "download.bash" | grep -v grep | head -n 1 | awk '{print $1}')"
-	echo "To kill script, use the following command:"
-	echo "kill -9 $processstartid"
-	echo "kill -9 $processdownloadid"
-	echo ""
-	echo ""
+	log "To kill script, use the following command:"
+	log "kill -9 $processstartid"
+	log "kill -9 $processdownloadid"
+	log ""
+	log ""
 	sleep 2
-	echo "############################################ $TITLE"
-	echo "############################################ SCRIPT VERSION 1.1.12"
-	echo "############################################ DOCKER VERSION $VERSION"
-	echo "############################################ CONFIGURATION VERIFICATION"
+	log "############################################ $TITLE"
+	log "############################################ SCRIPT VERSION 1.1.13"
+	log "############################################ DOCKER VERSION $VERSION"
+	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
 	
 	if [ "$AUTOSTART" == "true" ]; then
-		echo "$TITLESHORT Script Autostart: ENABLED"
+		log "$TITLESHORT Script Autostart: ENABLED"
 		if [ -z "$SCRIPTINTERVAL" ]; then
-			echo "WARNING: $TITLESHORT Script Interval not set! Using default..."
+			log "WARNING: $TITLESHORT Script Interval not set! Using default..."
 			SCRIPTINTERVAL="15m"
 		fi
-		echo "$TITLESHORT Script Interval: $SCRIPTINTERVAL"
+		log "$TITLESHORT Script Interval: $SCRIPTINTERVAL"
 	else
-		echo "$TITLESHORT Script Autostart: DISABLED"
+		log "$TITLESHORT Script Autostart: DISABLED"
 	fi
 	
 	# Verify Musicbrainz DB Connectivity
 	musicbrainzdbtest=$(curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/artist/f59c5520-5f46-4d2c-b2c4-822eabf53419?fmt=json")
 	musicbrainzdbtestname=$(echo "${musicbrainzdbtest}"| jq -r '.name')
 	if [ "$musicbrainzdbtestname" != "Linkin Park" ]; then
-		echo "ERROR: Cannot communicate with Musicbrainz"
-		echo "ERROR: Expected Response \"Linkin Park\", received response \"$musicbrainzdbtestname\""
-		echo "ERROR: URL might be Invalid: $MBRAINZMIRROR"
-		echo "ERROR: Remote Mirror may be throttling connection..."
-		echo "ERROR: Link used for testing: ${MBRAINZMIRROR}/ws/2/artist/f59c5520-5f46-4d2c-b2c4-822eabf53419?fmt=json"
-		echo "ERROR: Please correct error, consider using official Musicbrainz URL: https://musicbrainz.org"
+		log "ERROR: Cannot communicate with Musicbrainz"
+		log "ERROR: Expected Response \"Linkin Park\", received response \"$musicbrainzdbtestname\""
+		log "ERROR: URL might be Invalid: $MBRAINZMIRROR"
+		log "ERROR: Remote Mirror may be throttling connection..."
+		log "ERROR: Link used for testing: ${MBRAINZMIRROR}/ws/2/artist/f59c5520-5f46-4d2c-b2c4-822eabf53419?fmt=json"
+		log "ERROR: Please correct error, consider using official Musicbrainz URL: https://musicbrainz.org"
 		error=1
 	else
-		echo "Musicbrainz Mirror Valid: $MBRAINZMIRROR"
+		log "Musicbrainz Mirror Valid: $MBRAINZMIRROR"
 		if echo "$MBRAINZMIRROR" | grep -i "musicbrainz.org" | read; then
 			if [ "$MBRATELIMIT" != 1 ]; then
 				MBRATELIMIT="1.5"
 			fi
-			echo "Musicbrainz Rate Limit: $MBRATELIMIT (Queries Per Second)"
+			log "Musicbrainz Rate Limit: $MBRATELIMIT (Queries Per Second)"
 		else
-			echo "Musicbrainz Rate Limit: $MBRATELIMIT (Queries Per Second)"
+			log "Musicbrainz Rate Limit: $MBRATELIMIT (Queries Per Second)"
 			MBRATELIMIT="0$(echo $(( 100 * 1 / $MBRATELIMIT )) | sed 's/..$/.&/')"
 		fi
 	fi
@@ -54,30 +54,30 @@ Configuration () {
 	# verify downloads location
 	if [ -d "/downloads-amvd" ]; then
 		LIBRARY="/downloads-amvd"
-		echo "Music Video Library Location: $LIBRARY"
+		log "Music Video Library Location: $LIBRARY"
 	else
 		if [ ! -z "$LIBRARY" ]; then
-			echo "Music Video Library Location: $LIBRARY"
+			log "Music Video Library Location: $LIBRARY"
 			if [ ! -d "$LIBRARY" ]; then
-				echo "ERROR: LIBRARY setting invalid, currently set to: $LIBRARY"
-				echo "ERROR: The LIBRARY Folder does not exist, create the folder accordingly to resolve error"
-				echo "HINT: Check the path using the container CLI to verify it exists, command: ls \"$LIBRARY\""
+				log "ERROR: LIBRARY setting invalid, currently set to: $LIBRARY"
+				log "ERROR: The LIBRARY Folder does not exist, create the folder accordingly to resolve error"
+				log "HINT: Check the path using the container CLI to verify it exists, command: ls \"$LIBRARY\""
 				error=1
 			fi
 		else
-			echo "ERROR: Music Video Library Location Not Found! (/downloads-amvd)"
-			echo "ERROR: To correct error, please add a \"/downloads-amvd\" volume"
+			log "ERROR: Music Video Library Location Not Found! (/downloads-amvd)"
+			log "ERROR: To correct error, please add a \"/downloads-amvd\" volume"
 			error=1
 		fi
 	fi
 
 	if [ "$usetidal" == "true" ]; then
-		echo "Music Video Tidal Source: ENABLED"
+		log "Music Video Tidal Source: ENABLED"
 		if [ -z "$tidalusername" ]; then
-			echo "ERROR: tidalusername not provided"
+			log "ERROR: tidalusername not provided"
 			error=1
 		elif [ -z "$tidalpassword" ]; then
-			echo "ERROR: tidalpassword not provided"
+			log "ERROR: tidalpassword not provided"
 			error=1
 		else
 			if [ -f "/config/scripts/login" ]; then
@@ -87,99 +87,99 @@ Configuration () {
 				mkdir -p "/config/logs/tidal"
 			fi
 			echo -e "${tidalusername}\n${tidalpassword}" > "/config/scripts/login"
-			echo "Music Video Format Set To: Best Available"
-			echo "Music Video Extension: mkv"
+			log "Music Video Format Set To: Best Available"
+			log "Music Video Extension: mkv"
 		fi
 	else
 
 		# Country Code
 		if [ ! -z "$CountryCode" ]; then
-			echo "Music Video Country Code: $CountryCode"
+			log "Music Video Country Code: $CountryCode"
 		else
-			echo "ERROR: CountryCode is empty, please configure wtih a valid Country Code (lowercase)"
+			log "ERROR: CountryCode is empty, please configure wtih a valid Country Code (lowercase)"
 			error=1
 		fi
 
 		# RequireVideoMatch
 		if [ "$RequireVideoMatch" = "true" ]; then
-			echo "Music Video Require Match: ENABLED"
+			log "Music Video Require Match: ENABLED"
 		else
-			echo "Music Video Require Match: DISABLED"
+			log "Music Video Require Match: DISABLED"
 		fi
 
 		# videoformat
 		if [ ! -z "$videoformat" ]; then
-			echo "Music Video Format Set To: $videoformat"
+			log "Music Video Format Set To: $videoformat"
 		else
-			echo "Music Video Format Set To: --format bestvideo[vcodec*=avc1]+bestaudio[ext=m4a]"
+			log "Music Video Format Set To: --format bestvideo[vcodec*=avc1]+bestaudio[ext=m4a]"
 		fi
 
 		# videofilter
 		if [ ! -z "$videofilter" ]; then
-			echo "Music Video Filter: ENABLED ($videofilter)"
+			log "Music Video Filter: ENABLED ($videofilter)"
 		else
-			echo "Music Video Filter: DISABLED"
+			log "Music Video Filter: DISABLED"
 		fi
 
 		# subtitlelanguage
 		if [ ! -z "$subtitlelanguage" ]; then
 			subtitlelanguage="${subtitlelanguage,,}"
-			echo "Music Video Subtitle Language: $subtitlelanguage"
+			log "Music Video Subtitle Language: $subtitlelanguage"
 		else
 			subtitlelanguage="en"
-			echo "Music Video Subtitle Language: $subtitlelanguage"
+			log "Music Video Subtitle Language: $subtitlelanguage"
 		fi
 
 		if [ "WriteNFOs" == "true" ]; then
-			echo "Music Video NFO Writer: ENABLED"
+			log "Music Video NFO Writer: ENABLED"
 		else
-			echo "Music Video NFO Writer: DISABLED"
+			log "Music Video NFO Writer: DISABLED"
 		fi
 
 		if [ -z "$extension" ]; then
 			extension="mkv"
 		fi
-		echo "Music Video Extension: $extension"
+		log "Music Video Extension: $extension"
 
 	fi
 	
 	if [ ! -z "$USEFOLDERS" ]; then
 		if [ "$USEFOLDERS" == "true" ]; then
-			echo "Music Video Use Folders: ENABLED"
+			log "Music Video Use Folders: ENABLED"
 			if [ ! -z "$FolderPermissions" ]; then
-				echo "Music Video Foldder Permissions: $FolderPermissions"
+				log "Music Video Foldder Permissions: $FolderPermissions"
 			else
-				echo "WARNING: FolderPermissions not set, using default..."
+				log "WARNING: FolderPermissions not set, using default..."
 				FolderPermissions="755"
-				echo "Music Video Foldder Permissions: $FolderPermissions"
+				log "Music Video Foldder Permissions: $FolderPermissions"
 			fi
 		else
-			echo "Music Video Use Folders: DISABLED"
+			log "Music Video Use Folders: DISABLED"
 		fi
 	else
-		echo "WARNING: USEFOLDERS not set, using default..."
+		log "WARNING: USEFOLDERS not set, using default..."
 		USEFOLDERS="false"
-		echo "Music Video Use Folders:: DISABLED"
+		log "Music Video Use Folders:: DISABLED"
 	fi
 	
 	if [ ! -z "$FilePermissions" ]; then
-		echo "Music Video File Permissions: $FilePermissions"
+		log "Music Video File Permissions: $FilePermissions"
 	else
-		echo "ERROR: FilePermissions not set, using default..."
+		log "ERROR: FilePermissions not set, using default..."
 		FilePermissions="644"
-		echo "Music Video File Permissions: $FilePermissions"
+		log "Music Video File Permissions: $FilePermissions"
 	fi
 
 	if [ $error = 1 ]; then
-		echo "Please correct errors before attempting to run script again..."
-		echo "Exiting..."
+		log "Please correct errors before attempting to run script again..."
+		log "Exiting..."
 		exit 1
 	fi
 	sleep 5
 }
 
 CacheEngine () {
-	echo "############################################ STARTING CACHE ENGINE"
+	log "############################################ STARTING CACHE ENGINE"
 	wantit=$(curl -s --header "X-Api-Key:"${LidarrAPIkey} --request GET  "$LidarrUrl/api/v1/Artist/")
 	wantedtotal=$(echo "${wantit}"| jq -r '.[].sortName' | wc -l)
 	MBArtistID=($(echo "${wantit}" | jq -r ".[].foreignArtistId"))
@@ -193,12 +193,12 @@ CacheEngine () {
 		LidArtistNameCap="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .artistName")"
 		sanatizedartistname="$(echo "${LidArtistNameCap}"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]%%g" -e "s/  */ /g")"
 	if  [ "$LidArtistNameCap" == "Various Artists" ]; then
-		echo "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Skipping, not processed by design..."
+		log "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Skipping, not processed by design..."
 		continue
 	fi
 		if [ -f "/config/cache/$sanatizedartistname-$mbid-cache-complete" ]; then
 			if ! [[ $(find "/config/cache/$sanatizedartistname-$mbid-cache-complete" -mtime +7 -print) ]]; then
-				echo "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Skipping until cache expires..."
+				log "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Skipping until cache expires..."
 				continue
 			fi
 		fi
@@ -213,11 +213,11 @@ CacheEngine () {
 		fi
 
 		if [ ! -f "/config/cache/$sanatizedartistname-$mbid-info.json" ]; then
-			echo "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Caching Musicbrainz Artist Info..."
+			log "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Caching Musicbrainz Artist Info..."
 			curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/artist/$mbid?inc=url-rels+genres&fmt=json" -o "/config/cache/$sanatizedartistname-$mbid-info.json"
 			sleep $MBRATELIMIT
 		else
-			echo "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Musicbrainz Artist Info Cache Valid..."
+			log "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Musicbrainz Artist Info Cache Valid..."
 		fi
 
 		if [ "$usetidal" == "true" ]; then
@@ -239,7 +239,7 @@ CacheEngine () {
 		recordingcount=$(cat "/config/cache/$sanatizedartistname-$mbid-recording-count.json" | jq -r '."recording-count"')
 
 		if [ $newrecordingcount != $recordingcount ]; then
-			echo "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Cache needs update, cleaning..."
+			log "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Cache needs update, cleaning..."
 
 			if [ -f "/config/cache/$sanatizedartistname-$mbid-recordings.json" ]; then
 				rm "/config/cache/$sanatizedartistname-$mbid-recordings.json"
@@ -259,9 +259,9 @@ CacheEngine () {
 			fi
 		else
 			if [ ! -f "/config/cache/$sanatizedartistname-$mbid-recordings.json" ]; then
-				echo "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Caching MBZDB $recordingcount Recordings..."
+				log "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Caching MBZDB $recordingcount Recordings..."
 			else
-				echo "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: MBZDB Recording Cache Is Valid..."
+				log "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: MBZDB Recording Cache Is Valid..."
 			fi
 		fi
 
@@ -282,7 +282,7 @@ CacheEngine () {
 						dlnumber=$(( $offset + 100))
 					fi
 
-					echo "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Downloading page $i... ($offset - $dlnumber Results)"
+					log "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Downloading page $i... ($offset - $dlnumber Results)"
 					curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/recording?artist=$mbid&inc=url-rels&limit=100&offset=$offset&fmt=json" -o "/config/temp/$mbid-recording-page-$i.json"
 					sleep $MBRATELIMIT
 				fi
@@ -314,16 +314,16 @@ CacheEngine () {
 		fi
 
 		if [ $newreleasecount != $releasecount ]; then
-			echo "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Cache needs update, cleaning..."
+			log "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Cache needs update, cleaning..."
 			if [ -f "/config/cache/$sanatizedartistname-$mbid-releases.json" ]; then
 				rm "/config/cache/$sanatizedartistname-$mbid-releases.json"
 			fi
 		fi
 
 		if [ ! -f "/config/cache/$sanatizedartistname-$mbid-releases.json" ]; then
-			echo "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Caching $releasecount releases..."
+			log "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Caching $releasecount releases..."
 		else
-			echo "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Releases Cache Is Valid..."
+			log "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Releases Cache Is Valid..."
 		fi
 
 		if [ ! -f "/config/cache/$sanatizedartistname-$mbid-releases.json" ]; then
@@ -342,7 +342,7 @@ CacheEngine () {
 						offset=0
 						dlnumber=$(( $offset + 100))
 					fi
-					echo "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Downloading Releases page $i... ($offset - $dlnumber Results)"
+					log "$artistnumber of $wantedtotal :: MBZDB CACHE :: $LidArtistNameCap :: Downloading Releases page $i... ($offset - $dlnumber Results)"
 					curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/release?artist=$mbid&inc=genres+recordings+url-rels+release-groups&limit=100&offset=$offset&fmt=json" -o "/config/temp/$mbid-releases-page-$i.json"
 					sleep $MBRATELIMIT
 				fi
@@ -382,16 +382,16 @@ CacheEngine () {
 			# echo "$imvdbarurllistcount -ne $cachedimvdbcount"
 
 			if [ $imvdbarurllistcount -ne $cachedimvdbcount ]; then
-				echo "$artistnumber of $wantedtotal :: IMVDB CACHE :: $LidArtistNameCap :: Cache out of date"
+				log "$artistnumber of $wantedtotal :: IMVDB CACHE :: $LidArtistNameCap :: Cache out of date"
 				if [ -f "/config/cache/$sanatizedartistname-$mbid-imvdb.json" ]; then
 					rm "/config/cache/$sanatizedartistname-$mbid-imvdb.json"
 				fi
 			else
-				echo "$artistnumber of $wantedtotal :: IMVDB CACHE :: $LidArtistNameCap :: Cache Valid"
+				log "$artistnumber of $wantedtotal :: IMVDB CACHE :: $LidArtistNameCap :: Cache Valid"
 			fi
 
 			if [ ! -f "/config/cache/$sanatizedartistname-$mbid-imvdb.json" ]; then
-				echo "$artistnumber of $wantedtotal :: IMVDB CACHE :: $LidArtistNameCap :: Caching Releases"
+				log "$artistnumber of $wantedtotal :: IMVDB CACHE :: $LidArtistNameCap :: Caching Releases"
 				if [ ! -d "/config/temp" ]; then
 					mkdir "/config/temp"
 					sleep 0.1
@@ -400,14 +400,14 @@ CacheEngine () {
 					urlnumber=$(( $id + 1 ))
 					url="${imvdbarurllist[$id]}"
 					imvdbvideoid=$(curl -s "$url" | grep -Eoi '<a [^>]+>' |  grep -Eo 'href="[^\"]+"' | grep -Eo '(http|https)://[^"]+' | grep "sandbox" | sed 's/^.*%2F//')
-					echo "$artistnumber of $wantedtotal :: IMVDB CACHE :: $LidArtistNameCap :: Downloading Release $urlnumber Info"
+					log "$artistnumber of $wantedtotal :: IMVDB CACHE :: $LidArtistNameCap :: Downloading Release $urlnumber Info"
 					curl -s "https://imvdb.com/api/v1/video/$imvdbvideoid?include=sources" -o "/config/temp/$mbid-imvdb-$urlnumber.json"
 				done
 				if [ ! -f "/config/cache/$sanatizedartistname-$mbid-imvdb.json" ]; then
 					jq -s '.' /config/temp//$mbid-imvdb-*.json > "/config/cache/$sanatizedartistname-$mbid-imvdb.json"
 				fi
 				if [ -f "/config/cache/$sanatizedartistname-$mbid-imvdb.json" ]; then
-					echo "$artistnumber of $wantedtotal :: IMVDB CACHE :: $LidArtistNameCap :: Caching Complete"
+					log "$artistnumber of $wantedtotal :: IMVDB CACHE :: $LidArtistNameCap :: Caching Complete"
 				fi
 				if [ -d "/config/temp" ]; then
 					sleep 0.1
@@ -420,7 +420,7 @@ CacheEngine () {
 }
 
 DownloadVideos () {
-	echo "############################################ DOWNLOADING VIDEOS"
+	log "############################################ DOWNLOADING VIDEOS"
 	wantit=$(curl -s --header "X-Api-Key:"${LidarrAPIkey} --request GET  "$LidarrUrl/api/v1/Artist/")
 	wantedtotal=$(echo "${wantit}"|jq -r '.[].sortName' | wc -l)
 	MBArtistID=($(echo "${wantit}" | jq -r ".[].foreignArtistId"))
@@ -452,7 +452,7 @@ DownloadVideos () {
 		sanatizedartistname="$(echo "${LidArtistFolderName}" | sed 's% (.*)$%%g')"
 
 		if  [ "$LidArtistNameCap" == "Various Artists" ]; then
-			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping, not processed by design..."
+			log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping, not processed by design..."
 			continue
 		fi
 
@@ -463,20 +463,20 @@ DownloadVideos () {
 
 		if [ -f "/config/cache/$sanatizedartistname-$mbid-download-complete" ]; then
 			if ! [[ $(find "/config/cache/$sanatizedartistname-$mbid-download-complete" -mtime +7 -print) ]]; then
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Artist already processed previously, skipping until cache expires..."
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Artist already processed previously, skipping until cache expires..."
 				continue
 			fi
 		fi
 
-		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Processing"
-		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Normalizing MBZDB Release Info (Capitalization)"
+		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Processing"
+		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Normalizing MBZDB Release Info (Capitalization)"
 		releasesfilelowercase="$(echo ${releasesfile,,})"
 		imvdburl="$(echo "$mbzartistinfo" | jq -r ".relations[] | .url | select(.resource | contains(\"imvdb\")) | .resource")"
 		imvdbslug="$(basename "$imvdburl")"
 
 		if [ -f "/config/cache/$sanatizedartistname-$mbid-imvdb.json" ]; then
 			db="IMVDb"
-			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: IMVDB :: Aritst Link Found, using it's database for videos..."
+			log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: IMVDB :: Aritst Link Found, using it's database for videos..."
 			imvdbcache="$(cat "/config/cache/$sanatizedartistname-$mbid-imvdb.json")"
 			imvdbids=($(echo "$imvdbcache" |  jq -r ".[] | select(.sources[] | select(.source==\"youtube\")) | .id"))
 			videocount="$(echo "$imvdbcache" | jq -r ".[] | select(.sources[] | select(.source==\"youtube\")) | .id" | wc -l)"
@@ -497,11 +497,11 @@ DownloadVideos () {
 					touch "/config/logs/download.log"
 				fi
 				if cat "/config/logs/download.log" | grep -i ":: $youtubeid ::" | read; then
-					echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
+					log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
 					continue
 				fi
 				if cat "/config/logs/download.log" | grep -i "$youtubeurl" | read; then
-					echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
+					log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
 					continue
 				fi
 
@@ -516,14 +516,14 @@ DownloadVideos () {
 				youtubeaveragerating="$(echo "$youtubedata" | jq -r '.average_rating')"
 				videoalbum="$(echo "$youtubedata" | jq -r '.album')"
 				sanatizedvideodisambiguation=""
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ${videotitle}${nfovideodisambiguation} :: Checking for match"
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ${videotitle}${nfovideodisambiguation} :: Checking for match"
 
 				VideoMatch
 
 				if [ "$trackmatch" = "false" ]; then
-					echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Could not be matched to Musicbrainz"
+					log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Could not be matched to Musicbrainz"
 					if [ "$RequireVideoMatch" = "true" ]; then
-						echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Require Match Enabled, skipping..."
+						log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Require Match Enabled, skipping..."
 						continue
 					fi
 				fi
@@ -547,11 +547,11 @@ DownloadVideos () {
 				touch "/config/logs/imvdberror.log"
 			fi
 			if [ -f "/config/logs/imvdberror.log" ]; then
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MBZDB :: ERROR :: musicbrainz id: $mbid is missing IMVDB link, see: \"/config/logs/imvdberror.log\" for more detail..."
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MBZDB :: ERROR :: musicbrainz id: $mbid is missing IMVDB link, see: \"/config/logs/imvdberror.log\" for more detail..."
 				if cat "/config/logs/imvdberror.log" | grep "$mbid" | read; then
 					sleep 0.1
 				else
-					echo "Update Musicbrainz Relationship Page: https://musicbrainz.org/artist/$mbid/relationships for \"${LidArtistNameCap}\" with IMVDB Artist Link" >> "/config/logs/imvdberror.log"
+					log "Update Musicbrainz Relationship Page: https://musicbrainz.org/artist/$mbid/relationships for \"${LidArtistNameCap}\" with IMVDB Artist Link" >> "/config/logs/imvdberror.log"
 				fi
 			fi
 		fi
@@ -560,41 +560,41 @@ DownloadVideos () {
 
 		recordingcount=$(cat "/config/cache/$sanatizedartistname-$mbid-recording-count.json" | jq -r '."recording-count"')
 
-		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $recordingcount recordings found..."
+		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $recordingcount recordings found..."
 
 		videorecordings=($(echo "$recordingsfile" | jq -r '.[] | .recordings | .[] | select(.video==true) | .id'))
 		videocount=$(echo "$recordingsfile" | jq -r '.[] | .recordings | .[] | select(.video==true) | .id' | wc -l)
-		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: Checking $recordingcount recordings for videos..."
-		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $videocount video recordings found..."
+		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: Checking $recordingcount recordings for videos..."
+		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $videocount video recordings found..."
 
 		if [ $videocount = 0 ]; then
-			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping..."
+			log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping..."
 			if [ ! -z "$imvdburl" ]; then
 				downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mp4" | wc -l)
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
 				touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
 			fi
 			continue
 		fi
 
-		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: Checking $videocount video recordings for links..."
+		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: Checking $videocount video recordings for links..."
 		videorecordsfile="$(echo "$recordingsfile" | jq -r '.[] | .recordings | .[] | select(.video==true) | .')"
 		videocount="$(echo "$videorecordsfile" | jq -r 'select(.relations | .[] | .url | .resource | contains("youtube")) | .id' | sort -u | wc -l)"
 		videorecordsid=($(echo "$videorecordsfile" | jq -r 'select(.relations | .[] | .url | .resource | contains("youtube")) | .id' | sort -u))
-		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $videocount video recordings with links found!"
+		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $videocount video recordings with links found!"
 		if [ $videocount = 0 ]; then
-			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping..."
+			log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping..."
 			if [ ! -z "$imvdburl" ]; then
 				downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mp4" | wc -l)
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
 				touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
 			fi
 			continue
 		fi
 
-		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: Processing $videocount video recordings..."
+		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: Processing $videocount video recordings..."
 		for id in ${!videorecordsid[@]}; do
 			currentprocess=$(( $id + 1 ))
 			mbrecordid="${videorecordsid[$id]}"
@@ -608,7 +608,7 @@ DownloadVideos () {
 				touch "/config/logs/download.log"
 			fi
 			if cat "/config/logs/download.log" | grep -i ".* :: ${mbrecordid} :: .*" | read; then
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
 				continue
 			fi
 
@@ -620,7 +620,7 @@ DownloadVideos () {
 					continue
 				fi
 				if cat "/config/logs/download.log" | grep -i "$recordurl" | read; then
-					echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
+					log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
 					break
 				fi
 				youtubedata="$(python3 /usr/local/bin/youtube-dl ${cookies} -j $recordurl 2> /dev/null)"
@@ -638,26 +638,26 @@ DownloadVideos () {
 					continue
 				fi
 				if cat "/config/logs/download.log" | grep -i ":: $youtubeid ::" | read; then
-					echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
+					log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
 					break
 				fi
 				if cat "/config/logs/download.log" | grep -i "$youtubeurl" | read; then
-					echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
+					log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
 					break
 				fi
 
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ${videotitle}${nfovideodisambiguation} :: Checking for match"
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ${videotitle}${nfovideodisambiguation} :: Checking for match"
 
 				VideoMatch
 
 				if [ "$trackmatch" = "false" ]; then
 					if [ "$filter" = "true" ]; then
-						echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Not matched because of unwanted filter \"$videofilter\""
+						log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Not matched because of unwanted filter \"$videofilter\""
 					else
-						echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Could not be matched to Musicbrainz"
+						log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Could not be matched to Musicbrainz"
 					fi
 					if [ "$RequireVideoMatch" = "true" ]; then
-						echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Require Match Enabled, skipping..."
+						log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Require Match Enabled, skipping..."
 						continue
 					fi
 				fi
@@ -679,12 +679,12 @@ DownloadVideos () {
 			done
 		done
 		downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.$extension" | wc -l)
-		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
-		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
+		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
+		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
 		touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
 	done
 	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 2 -type f -iname "*.$extension" | wc -l)
-	echo "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
+	log "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
 }
 
 VideoNFOWriter () {
@@ -738,7 +738,7 @@ VideoNFOWriter () {
 			else
 				track=""
 			fi
-			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
+			log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
 cat <<EOF > "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.nfo"
 <musicvideo>
 	<title>${videotitle}${nfovideodisambiguation}</title>
@@ -880,7 +880,7 @@ VideoMatch () {
 			if [ "$skip" = false ]; then
 				trackmatch=true
 				filter=false
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: Track $releasetrackposition :: $releasetracktitle :: $releasegrouptitle :: $releasestatus :: $releasecountry :: $releasegroupstatus :: $releasegroupyear"
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: Track $releasetrackposition :: $releasetracktitle :: $releasegrouptitle :: $releasestatus :: $releasecountry :: $releasegroupstatus :: $releasegroupyear"
 				videotrackposition="$releasetrackposition"
 				videotitle="$releasetracktitle"
 				sanitizevideotitle="$(echo "$videotitle"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]%%g" -e "s/  */ /g")"
@@ -946,12 +946,12 @@ VideoDownload () {
 	fi
 	
 	if [[ ! -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" || ! -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]]; then
-		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
-		echo "=======================START YOUTUBE-DL========================="
+		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
+		log "=======================START YOUTUBE-DL========================="
 		youtube-dl ${cookies} -o "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
-		echo "========================STOP YOUTUBE-DL========================="
+		log "========================STOP YOUTUBE-DL========================="
 		if [ -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
-			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
+			log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
 			audiochannels="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels")"
 			width="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
 			height="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
@@ -996,12 +996,12 @@ VideoDownload () {
 				else
 					mkvdirectormetadata=""
 				fi
-				echo "========================START MKVPROPEDIT========================"
+				log "========================START MKVPROPEDIT========================"
 				mkvpropedit "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" --add-track-statistics-tags
-				echo "========================STOP MKVPROPEDIT========================="
+				log "========================STOP MKVPROPEDIT========================="
 				mv "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" "$destination/temp.mkv"
 				cp "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$destination/cover.jpg"
-				echo "========================START FFMPEG========================"
+				log "========================START FFMPEG========================"
 				ffmpeg -y \
 					-i "$destination/temp.mkv" \
 					-c copy \
@@ -1017,7 +1017,7 @@ VideoDownload () {
 					-metadata:s:a:0 title="$audiodescription" \
 					-attach "$destination/cover.jpg" -metadata:s:t mimetype=image/jpeg \
 					"$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
-				echo "========================STOP FFMPEG========================="
+				log "========================STOP FFMPEG========================="
 				rm "$destination/cover.jpg"
 				rm "$destination/temp.mkv"
 				chmod $FilePermissions "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
@@ -1026,7 +1026,7 @@ VideoDownload () {
 			if [ "$extension" == "mp4" ]; then
 
 				if [ -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
-					echo "========================START FFMPEG========================"
+					log "========================START FFMPEG========================"
 					ffmpeg -y \
 						-i "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
 						-c copy \
@@ -1035,12 +1035,12 @@ VideoDownload () {
 						-movflags faststart \
 						-strict -2 \
 						"$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
-					echo "========================STOP FFMPEG========================="
+					log "========================STOP FFMPEG========================="
 				fi
 
 				if [ -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
 					rm "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
-					echo "========================START TAGGING========================"
+					log "========================START TAGGING========================"
 					python3 /config/scripts/tag.py \
 						--file "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
 						--songtitle "${videotitle}${nfovideodisambiguation}" \
@@ -1052,7 +1052,7 @@ VideoDownload () {
 						--songdate "$year" \
 						--quality "$videoquality" \
 						--songartwork "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
-						echo "========================STOP TAGGING========================="
+						log "========================STOP TAGGING========================="
 				fi
 				chmod $FilePermissions "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
 			fi
@@ -1060,29 +1060,28 @@ VideoDownload () {
 			# reset language
 			releaselanguage="null"
 
-			echo "Video :: Downloaded :: $db :: ${LidArtistNameCap} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
+			log "Video :: Downloaded :: $db :: ${LidArtistNameCap} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
 		else
-			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Downloaded Failed!"
+			log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Downloaded Failed!"
 		fi
 	else
-		echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} ::  ${videotitle}${nfovideodisambiguation} already downloaded!"
+		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} ::  ${videotitle}${nfovideodisambiguation} already downloaded!"
 		if cat "/config/logs/download.log" | grep -i ":: $youtubeid ::" | read; then
 			sleep 0.1
 		else
-			echo "Video :: Downloaded :: $db :: ${LidArtistNameCap} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
+			log "Video :: Downloaded :: $db :: ${LidArtistNameCap} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
 		fi
 	fi
 }
 
 TidalVideoDownloads () {
-	echo "############################################ Tidal Video Downloads"
+	log "############################################ Tidal Video Downloads"
 	wantit=$(curl -s --header "X-Api-Key:"${LidarrAPIkey} --request GET  "$LidarrUrl/api/v1/Artist/")
 	wantedtotal=$(echo "${wantit}"| jq -r '.[].sortName' | wc -l)
 	MBArtistID=($(echo "${wantit}" | jq -r ".[].foreignArtistId"))
 
 	for id in ${!MBArtistID[@]}; do
 		artistnumber=$(( $id + 1 ))
-		tidalurl=""
 		mbid="${MBArtistID[$id]}"
 		lidarrartistdata=$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\")")
 		LidArtistNameCap="$(echo "$lidarrartistdata" | jq -r ".artistName")"
@@ -1094,21 +1093,21 @@ TidalVideoDownloads () {
 			sleep $MBRATELIMIT
 		fi
 		tidalartistid="$(echo "$tidalurl" | grep -o '[[:digit:]]*')"
-		LidArtistPath="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .path")"
+		LidArtistNameCap="$(echo "$lidarrartistdata" | jq -r ".path")"
 		LidArtistFolderName="$(basename "${LidArtistPath}")"
 		sanatizedartistname="$(echo "${LidArtistFolderName}" | sed 's% (.*)$%%g')"
 		
 		if [ -f "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" ]; then
 			if ! [[ $(find "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" -mtime +7 -print) ]]; then
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: Videos already downloaded according to cache, skipping..."
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: Videos already downloaded according to cache, skipping..."
 				continue
 			else
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: Clearing completed download cache..."
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: Clearing completed download cache..."
 			fi
 		fi
 		if [ ! -f "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" ]; then
 			if [ ! -z "$tidalurl" ]; then
-				echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $tidalurl :: $tidalartistid"
+				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $tidalurl :: $tidalartistid"
 				if [ "$USEFOLDERS" == "true" ]; then
 					destination="$LIBRARY/$LidArtistFolderName"
 					if [ ! -d "$destination" ]; then
@@ -1146,7 +1145,7 @@ TidalVideoDownloads () {
 					chown abc:abc "$newvideofilename.mkv"
 				done
 				if [ ! -f "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete" ]; then
-					echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: All Available Videos Downloaded!"
+					log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: All Available Videos Downloaded!"
 					touch "/config/cache/$sanatizedartistname-$mbid-tidal-download-complete"
 				fi
 			else
@@ -1154,34 +1153,44 @@ TidalVideoDownloads () {
 					touch "/config/logs/musicbrainzerror.log"
 				fi
 				if [ -f "/config/logs/musicbrainzerror.log" ]; then
-					echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: ERROR: musicbrainz id: $mbid is missing Tidal Artist link, see: \"/config/logs/musicbrainzerror.log\" for more detail..."
+					log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: ERROR: musicbrainz id: $mbid is missing Tidal Artist link, see: \"/config/logs/musicbrainzerror.log\" for more detail..."
 					if cat "/config/logs/musicbrainzerror.log" | grep "/$mbid/" | read; then
 						sleep 0
 					else
-						echo "$LidArtistNameCap :: Update Musicbrainz Relationship Page: https://musicbrainz.org/artist/$mbid/relationships with Tidal Artist Link" >> "/config/logs/musicbrainzerror.log"
+						log "$LidArtistNameCap :: Update Musicbrainz Relationship Page: https://musicbrainz.org/artist/$mbid/relationships with Tidal Artist Link" >> "/config/logs/musicbrainzerror.log"
 					fi
 				fi
 			fi
 		else
-			echo "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: Videos already downloaded, skipping.."
+			log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: TIDAL :: Videos already downloaded, skipping.."
 			continue
 		fi
 	done
 	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 2 -type f -iname "*.mkv" | wc -l)
-	echo "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
+	log "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
 }
 
-Configuration
-if [ "$usetidal" == "true" ]; then
-	TidalVideoDownloads
-else
-	CacheEngine
-	DownloadVideos
-fi
+log () {
+    m_time=`date "+%F %T"`
+    echo $m_time" "$1
+}
 
-echo "############################################ SCRIPT COMPLETE"
-if [ "$AUTOSTART" == "true" ]; then
-	echo "############################################ SCRIPT SLEEPING FOR $SCRIPTINTERVAL"
-fi
+Main () {
 
+	Configuration
+	if [ "$usetidal" == "true" ]; then
+		TidalVideoDownloads
+	else
+		CacheEngine
+		DownloadVideos
+	fi
+
+	log "############################################ SCRIPT COMPLETE"
+	if [ "$AUTOSTART" == "true" ]; then
+		log "############################################ SCRIPT SLEEPING FOR $SCRIPTINTERVAL"
+	fi
+
+}
+
+Main
 exit 0
