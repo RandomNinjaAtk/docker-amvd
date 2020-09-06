@@ -22,8 +22,6 @@
   * Support for Musicbrainz Database (https://musicbrainz.org) to find videos
   * Downloads using Highest available quality for both audio and video
   * Saves thumbnail of video locally for Plex/Kodi/Jellyfin/Emby usage
-  * iTunes compatible files, drag and drop iTunes support
-  * Optimize files for faststart playback
   * Matching videos with Musicbrainz Artist track info
   * Embed subtitles if available matching desired language
   * Writes metadata into Kodi/Jellyfin/Emby compliant NFO file
@@ -89,7 +87,6 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e USEFOLDERS=false` | true = enabled :: Creates subfolders using the Lidarr Artist folder name |
 | `-e FilePermissions=644` | Based on chmod linux permissions |
 | `-e FolderPermissions=755` | Based on chmod linux permissions |
-| `-e extension="mkv"` | mkv or mp4 :: Set to the desired output format... |
 
 ## Usage
 
