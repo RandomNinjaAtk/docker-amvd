@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.17"
+	log "############################################ SCRIPT VERSION 1.1.18"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -73,7 +73,7 @@ Configuration () {
 		fi
 	fi
 	
-	if [[ "$SOURCE_CONNECTION" != "lidarr" || "$SOURCE_CONNECTION" != "ama" ]]; then
+	if [[ "$SOURCE_CONNECTION" != "lidarr" && "$SOURCE_CONNECTION" != "ama" ]]; then
 		log "ERROR :: SOURCE_CONNECTION not configured"
 		log "ERROR :: Set SOURCE_CONNECTION to \"lidarr\" or \"ama\""
 		error=1
