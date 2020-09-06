@@ -1,4 +1,6 @@
 #!/usr/bin/with-contenv bash
+export LC_ALL=C.UTF-8
+export LANG=C.UTF-8
 agent="automated-music-video-downloader ( https://github.com/RandomNinjaAtk/docker-amvd )"
 
 Configuration () {
@@ -11,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.14"
+	log "############################################ SCRIPT VERSION 1.1.15"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -135,11 +137,8 @@ Configuration () {
 		else
 			log "Music Video NFO Writer: DISABLED"
 		fi
-
-		if [ -z "$extension" ]; then
-			extension="mkv"
-		fi
-		log "Music Video Extension: $extension"
+		
+		log "Music Video Extension: mkv"
 
 	fi
 	
@@ -570,7 +569,7 @@ DownloadVideos () {
 		if [ $videocount = 0 ]; then
 			log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping..."
 			if [ ! -z "$imvdburl" ]; then
-				downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mp4" | wc -l)
+				downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mkv" | wc -l)
 				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
 				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
 				touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
@@ -586,7 +585,7 @@ DownloadVideos () {
 		if [ $videocount = 0 ]; then
 			log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: Skipping..."
 			if [ ! -z "$imvdburl" ]; then
-				downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mp4" | wc -l)
+				downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mkv" | wc -l)
 				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
 				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
 				touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
@@ -678,18 +677,18 @@ DownloadVideos () {
 
 			done
 		done
-		downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.$extension" | wc -l)
+		downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanatizedartistname - *.mkv" | wc -l)
 		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $downloadcount Videos Downloaded!"
 		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: MARKING ARTIST AS COMPLETE"
 		touch "/config/cache/$sanatizedartistname-$mbid-download-complete"
 	done
-	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 2 -type f -iname "*.$extension" | wc -l)
+	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 2 -type f -iname "*.mkv" | wc -l)
 	log "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
 }
 
 VideoNFOWriter () {
 
-	if [ -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
+	if [ -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
 		if [ ! -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.nfo" ]; then
 			if [ "$videoyear" != "null" ]; then
 				year="$videoyear"
@@ -883,7 +882,7 @@ VideoMatch () {
 				log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: Track $releasetrackposition :: $releasetracktitle :: $releasegrouptitle :: $releasestatus :: $releasecountry :: $releasegroupstatus :: $releasegroupyear"
 				videotrackposition="$releasetrackposition"
 				videotitle="$releasetracktitle"
-				sanitizevideotitle="$(echo "$videotitle"  |  sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g'  -e "s/  */ /g")"
+				sanitizevideotitle="$(echo "$videotitle" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g'  -e "s/  */ /g")"
 				videoyear="$releasegroupyear"
 				videoalbum="$releasegrouptitle"
 				videogenres="$(echo "$releasegroupgenres" | sed -e "s/\b\(.\)/\u\1/g")"
@@ -900,7 +899,7 @@ VideoMatch () {
 VideoDownload () {
 	if [ ! -z "$videodisambiguation" ]; then
 		nfovideodisambiguation=" ($videodisambiguation)"
-		sanitizedvideodisambiguation=" ($(echo "${videodisambiguation}" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g' -e 's/^\(nul\|prn\|con\|lpt[0-9]\|com[0-9]\|aux\)\(\.\|$\)//i' -e 's/^\.*$//' -e 's/^$/NONAME/'))"
+		sanitizedvideodisambiguation=" ($(echo "${videodisambiguation}" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g'  -e "s/  */ /g"))"
 	else
 		nfovideodisambiguation=""
 		sanitizedvideodisambiguation=""
@@ -945,7 +944,7 @@ VideoDownload () {
 		destination="$LIBRARY"
 	fi
 	
-	if [[ ! -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" || ! -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]]; then
+	if [ ! -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
 		log "$artistnumber of $wantedtotal :: $LidArtistNameCap :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
 		log "=======================START YOUTUBE-DL========================="
 		youtube-dl ${cookies} -o "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
@@ -989,74 +988,38 @@ VideoDownload () {
 					"$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" &> /dev/null
 			fi
 
-			if [ "$extension" == "mkv" ]; then
-				if [ ! -z "$videodirectors" ]; then
-					mkvdirector="$(echo "$videodrectors" | head -n 1)"
-					mkvdirectormetadata="-metadata DIRECTOR="$videodrectors""
-				else
-					mkvdirectormetadata=""
-				fi
-				log "========================START MKVPROPEDIT========================"
-				mkvpropedit "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" --add-track-statistics-tags
-				log "========================STOP MKVPROPEDIT========================="
-				mv "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" "$destination/temp.mkv"
-				cp "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$destination/cover.jpg"
-				log "========================START FFMPEG========================"
-				ffmpeg -y \
-					-i "$destination/temp.mkv" \
-					-c copy \
-					-metadata TITLE="${videotitle}${nfovideodisambiguation}" \
-					-metadata ARTIST="$LidArtistNameCap" \
-					-metadata DATE_RELEASE="$year" \
-					-metadata GENRE="$genre" \
-					-metadata ALBUM="$album" \
-					-metadata ENCODED_BY="AMVD" \
-					-metadata CONTENT_TYPE="Music Video" \
-					$mkvdirectormetadata \
-					-metadata:s:v:0 title="$qualitydescription" \
-					-metadata:s:a:0 title="$audiodescription" \
-					-attach "$destination/cover.jpg" -metadata:s:t mimetype=image/jpeg \
-					"$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
-				log "========================STOP FFMPEG========================="
-				rm "$destination/cover.jpg"
-				rm "$destination/temp.mkv"
-				chmod $FilePermissions "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+			if [ ! -z "$videodirectors" ]; then
+				mkvdirector="$(echo "$videodrectors" | head -n 1)"
+				mkvdirectormetadata="-metadata DIRECTOR="$videodrectors""
+			else
+				mkvdirectormetadata=""
 			fi
-
-			if [ "$extension" == "mp4" ]; then
-
-				if [ -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
-					log "========================START FFMPEG========================"
-					ffmpeg -y \
-						-i "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
-						-c copy \
-						-metadata:s:v:0 title="$qualitydescription" \
-						-metadata:s:a:0 title="$audiodescription" \
-						-movflags faststart \
-						-strict -2 \
-						"$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
-					log "========================STOP FFMPEG========================="
-				fi
-
-				if [ -f "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
-					rm "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
-					log "========================START TAGGING========================"
-					python3 /config/scripts/tag.py \
-						--file "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
-						--songtitle "${videotitle}${nfovideodisambiguation}" \
-						--songalbum "$album" \
-						--songartist "$LidArtistNameCap" \
-						--songartistalbum "$LidArtistNameCap" \
-						--songtracknumber "$track" \
-						--songgenre "$genre" \
-						--songdate "$year" \
-						--quality "$videoquality" \
-						--songartwork "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
-						log "========================STOP TAGGING========================="
-				fi
-				chmod $FilePermissions "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
-			fi
-
+			log "========================START MKVPROPEDIT========================"
+			mkvpropedit "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" --add-track-statistics-tags
+			log "========================STOP MKVPROPEDIT========================="
+			mv "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" "$destination/temp.mkv"
+			cp "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$destination/cover.jpg"
+			log "========================START FFMPEG========================"
+			ffmpeg -y \
+				-i "$destination/temp.mkv" \
+				-c copy \
+				-metadata TITLE="${videotitle}${nfovideodisambiguation}" \
+				-metadata ARTIST="$LidArtistNameCap" \
+				-metadata DATE_RELEASE="$year" \
+				-metadata GENRE="$genre" \
+				-metadata ALBUM="$album" \
+				-metadata ENCODED_BY="AMVD" \
+				-metadata CONTENT_TYPE="Music Video" \
+				$mkvdirectormetadata \
+				-metadata:s:v:0 title="$qualitydescription" \
+				-metadata:s:a:0 title="$audiodescription" \
+				-attach "$destination/cover.jpg" -metadata:s:t mimetype=image/jpeg \
+				"$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+			log "========================STOP FFMPEG========================="
+			rm "$destination/cover.jpg"
+			rm "$destination/temp.mkv"
+			chmod $FilePermissions "$destination/$sanatizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+		
 			# reset language
 			releaselanguage="null"
 
