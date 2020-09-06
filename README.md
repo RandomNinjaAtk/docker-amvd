@@ -69,12 +69,14 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e PGID=1000` | for GroupID - see below for explanation |
 | `-v /config` | Configuration files for Lidarr. |
 | `-v /downloads-amvd` | Location of music videos, also add a volume to match the location |
+| `-v /ama` | Optional :: Map this to the AMA containers /config folder for proper usage |
 | `-e AUTOSTART="true"` | true = Enabled :: Runs script automatically on startup |
 | `-e SCRIPTINTERVAL=1h` | #s or #m or #h or #d :: s = seconds, m = minutes, h = hours, d = days :: Amount of time between each script run, when AUTOSTART is enabled |
 | `-e LidarrUrl="http://127.0.0.1:8686"` | Set domain or IP to your Lidarr instance including port. If using reverse proxy, do not use a trailing slash. Ensure you specify http/s. |
 | `-e LidarrAPIkey="08d108d108d108d108d108d108d108d1"` | Lidarr API key. |
 | `-e MBRAINZMIRROR="https://musicbrainz.org"` | OPTIONAL :: Only change if using a different mirror |
 | `-e MBRATELIMIT=1` | OPTIONAL: musicbrainz rate limit, musicbrainz allows only 1 connection per second, max setting is 10 |
+| `-e SOURCE_CONNECTION=lidarr` | lidarr or ama :: ama requires the AMA config folder to be mounted as a volume: /ama |
 | `-e usetidal=false` | true = enabled :: This will enable downloading all videos from Tidal for an artist, paid subscription required :: OPTIONAL |
 | `-e tidalusername=yourusername` | REQUIRED for Tidal |
 | `-e tidalpassword=yourpasssword` | REQUIRED for Tidal |
@@ -99,6 +101,7 @@ docker create \
   --name=amvd \
   -v /path/to/config/files:/config \
   -v /path/to/music-videos:/downloads-amvd \
+  -v /path/to/ama/config:/ama \
   -e PUID=1000 \
   -e PGID=1000 \
   -e AUTOSTART=true \
@@ -106,6 +109,7 @@ docker create \
   -e usetidal=false \
   -e tidalusername=TIDALUSERNAME \
   -e tidalpassword=TIDALPASSWORD \
+  -e SOURCE_CONNECTION=lidarr \
   -e RequireVideoMatch=true \
   -e videoformat="--format bestvideo[vcodec*=avc1]+bestaudio" \
   -e subtitlelanguage=en \
@@ -135,11 +139,13 @@ services:
     volumes:
       - /path/to/config/files:/config
       - /path/to/music-videos:/downloads-amvd
+      - /path/to/ama/config:/ama
     environment:
       - PUID=1000
       - PGID=1000
       - AUTOSTART=true
       - SCRIPTINTERVAL=1h
+      - SOURCE_CONNECTION=lidarr
       - usetidal=false
       - tidalusername=TIDALUSERNAME
       - tidalpassword=TIDALPASSWORD
