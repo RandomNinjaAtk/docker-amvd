@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.16"
+	log "############################################ SCRIPT VERSION 1.1.17"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -73,15 +73,21 @@ Configuration () {
 		fi
 	fi
 	
+	if [[ "$SOURCE_CONNECTION" != "lidarr" || "$SOURCE_CONNECTION" != "ama" ]]; then
+		log "ERROR :: SOURCE_CONNECTION not configured"
+		log "ERROR :: Set SOURCE_CONNECTION to \"lidarr\" or \"ama\""
+		error=1
+	fi
+	
 	if [ "$SOURCE_CONNECTION" == "ama" ]; then
 		log "Music Video Artist List Source: $SOURCE_CONNECTION"
 		if [ ! -d "/ama/list" ]; then
 			log "ERROR :: AMA List folder not found (/ama/list)"
 			log "ERROR :: To correct, mount AMA config folder as \"/ama\" volume"
 			error=1
-		exit
+		fi
 	fi
-	fi
+	
 	if [ "$SOURCE_CONNECTION" == "lidarr" ]; then
 		log "Music Video Artist List Source: $SOURCE_CONNECTION"
 		
