@@ -11,7 +11,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.13"
+	log "############################################ SCRIPT VERSION 1.1.14"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -1093,7 +1093,7 @@ TidalVideoDownloads () {
 			sleep $MBRATELIMIT
 		fi
 		tidalartistid="$(echo "$tidalurl" | grep -o '[[:digit:]]*')"
-		LidArtistNameCap="$(echo "$lidarrartistdata" | jq -r ".path")"
+		LidArtistPath="$(echo "$lidarrartistdata" | jq -r ".path")"
 		LidArtistFolderName="$(basename "${LidArtistPath}")"
 		sanatizedartistname="$(echo "${LidArtistFolderName}" | sed 's% (.*)$%%g')"
 		
