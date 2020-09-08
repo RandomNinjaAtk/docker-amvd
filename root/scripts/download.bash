@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.20"
+	log "############################################ SCRIPT VERSION 1.1.21"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -513,7 +513,7 @@ DownloadVideos () {
 			videodirectors="$(echo "$imvdbvideodata" | jq -r ".directors[] | .entity_name")"
 			videoimage="$(echo "$imvdbvideodata" | jq -r ".image.o")"
 			videoyear="$(echo "$imvdbvideodata" | jq -r ".year")"
-			santizevideotitle="$(echo "$imvdbvideotitle"  |  sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g'  -e "s/  */ /g")"
+			santizevideotitle="$(echo "$imvdbvideotitle"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g")"
 			youtubeid="$(echo "$imvdbvideodata" | jq -r ".sources[] | select(.source==\"youtube\") | .source_data" | head -n 1)"
 			youtubeurl="https://www.youtube.com/watch?v=$youtubeid"
 			if ! [ -f "/config/logs/download.log" ]; then
@@ -624,8 +624,8 @@ DownloadVideos () {
 		videotitlelowercase="$(echo ${videotitle,,})"
 		videodisambiguation="$(echo "$videorecordsfile" | jq -r "select(.id==\"$mbrecordid\") | .disambiguation")"
 		dlurl=($(echo "$videorecordsfile" | jq -r "select(.id==\"$mbrecordid\") | .relations | .[] | .url | .resource" | sort -u))
-		sanitizevideotitle="$(echo "${videotitle}"  |  sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g'  -e "s/  */ /g")"
-		sanitizedvideodisambiguation="$(echo "${videodisambiguation}"  |  sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g'  -e "s/  */ /g")"
+		sanitizevideotitle="$(echo "${videotitle}"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g")"
+		sanitizedvideodisambiguation="$(echo "${videodisambiguation}"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g")"
 		if ! [ -f "/config/logs/download.log" ]; then
 			touch "/config/logs/download.log"
 		fi
@@ -900,7 +900,7 @@ VideoMatch () {
 				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: Track $releasetrackposition :: $releasetracktitle :: $releasegrouptitle :: $releasestatus :: $releasecountry :: $releasegroupstatus :: $releasegroupyear"
 				videotrackposition="$releasetrackposition"
 				videotitle="$releasetracktitle"
-				sanitizevideotitle="$(echo "$videotitle" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g'  -e "s/  */ /g")"
+				sanitizevideotitle="$(echo "$videotitle" | sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g")"
 				videoyear="$releasegroupyear"
 				videoalbum="$releasegrouptitle"
 				videogenres="$(echo "$releasegroupgenres" | sed -e "s/\b\(.\)/\u\1/g")"
@@ -917,7 +917,7 @@ VideoMatch () {
 VideoDownload () {
 	if [ ! -z "$videodisambiguation" ]; then
 		nfovideodisambiguation=" ($videodisambiguation)"
-		sanitizedvideodisambiguation=" ($(echo "${videodisambiguation}" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g'  -e "s/  */ /g"))"
+		sanitizedvideodisambiguation=" ($(echo "${videodisambiguation}" | sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g"))"
 	else
 		nfovideodisambiguation=""
 		sanitizedvideodisambiguation=""
