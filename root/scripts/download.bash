@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.18"
+	log "############################################ SCRIPT VERSION 1.1.19"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -225,8 +225,10 @@ CacheEngine () {
 	for id in ${!MBArtistID[@]}; do
 		artistnumber=$(( $id + 1 ))
 		mbid="${MBArtistID[$id]}"
-		LidArtistNameCap="$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\") | .artistName")"
-		sanatizedartistname="$(echo "${LidArtistNameCap}"  |  sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g'  -e "s/  */ /g")"
+		artistdata=$(echo "${lidarrdata}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\")")
+		LidArtistNameCap="$(echo "${artistdata}" | jq -r " .artistName")"
+		artistnamepath="$(echo "${artistdata}" | jq -r " .path")"
+		sanatizedartistname="$(basename "${artistnamepath}" | sed 's% (.*)$%%g')"
 	if  [ "$LidArtistNameCap" == "Various Artists" ]; then
 		log "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Skipping, not processed by design..."
 		continue
