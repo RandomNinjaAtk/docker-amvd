@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.19"
+	log "############################################ SCRIPT VERSION 1.1.20"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -225,7 +225,7 @@ CacheEngine () {
 	for id in ${!MBArtistID[@]}; do
 		artistnumber=$(( $id + 1 ))
 		mbid="${MBArtistID[$id]}"
-		artistdata=$(echo "${lidarrdata}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\")")
+		artistdata=$(echo "${wantit}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\")")
 		LidArtistNameCap="$(echo "${artistdata}" | jq -r " .artistName")"
 		artistnamepath="$(echo "${artistdata}" | jq -r " .path")"
 		sanatizedartistname="$(basename "${artistnamepath}" | sed 's% (.*)$%%g')"
