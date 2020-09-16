@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.21"
+	log "############################################ SCRIPT VERSION 1.1.22"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -168,7 +168,7 @@ Configuration () {
 			log "Music Video Subtitle Language: $subtitlelanguage"
 		fi
 
-		if [ "WriteNFOs" == "true" ]; then
+		if [ "$WriteNFOs" == "true" ]; then
 			log "Music Video NFO Writer: ENABLED"
 		else
 			log "Music Video NFO Writer: DISABLED"
@@ -553,7 +553,7 @@ DownloadVideos () {
 
 			VideoDownload
 
-			if [ "WriteNFOs" == "true" ]; then
+			if [ "$WriteNFOs" == "true" ]; then
 				VideoNFOWriter
 			else
 				if find "$destination" -type f -iname "*.jpg" | read; then
