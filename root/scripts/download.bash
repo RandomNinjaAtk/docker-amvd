@@ -513,7 +513,7 @@ DownloadVideos () {
 			videodirectors="$(echo "$imvdbvideodata" | jq -r ".directors[] | .entity_name")"
 			videoimage="$(echo "$imvdbvideodata" | jq -r ".image.o")"
 			videoyear="$(echo "$imvdbvideodata" | jq -r ".year")"
-			sanitizevideotitle="$(echo "$imvdbvideotitle"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g")"
+			sanitizevideotitle="$(echo "$videotitle"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g")"
 			youtubeid="$(echo "$imvdbvideodata" | jq -r ".sources[] | select(.source==\"youtube\") | .source_data" | head -n 1)"
 			youtubeurl="https://www.youtube.com/watch?v=$youtubeid"
 			if ! [ -f "/config/logs/download.log" ]; then
