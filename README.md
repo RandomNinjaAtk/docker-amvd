@@ -133,7 +133,7 @@ Compatible with docker-compose v2 schemas.
 ```
 version: "2.1"
 services:
-  amd:
+  amvd:
     image: randomninjaatk/amvd 
     container_name: amvd
     volumes:
