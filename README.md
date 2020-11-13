@@ -79,11 +79,11 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e SOURCE_CONNECTION=lidarr` | lidarr or ama :: ama requires the AMA config folder to be mounted as a volume: /ama |
 | `-e CountryCode=us` | Set the country code for preferred video matching, uses Musicbrainz Country Codes, lowercase only. |
 | `-e RequireVideoMatch=true` | true = enabled :: Only keep videos that could be matched to a Musicbrainz music track. |
-| `-e videoformat="--format bestvideo[vcodec*=avc1]+bestaudio"` | For guidence, please see youtube-dl documentation |
 | `-e subtitlelanguage="en"` | Desired Language Code :: For guidence, please see youtube-dl documentation. |
 | `-e videofilter="live"` | This will filter out videos Matching MusicBrainz secondary release type and album disambiguation (single word only) |
 | `-e WriteNFOs="false"` | true = enabled :: Create NFO and Local Thumbnail for use in applications such as Kodi |
 | `-e USEFOLDERS=false` | true = enabled :: Creates subfolders using the Lidarr Artist folder name |
+| `-e USEVIDEOFOLDERS=false` | true = enabled :: Creates subfolders using Video File Name only, requires USEFOLDERS to be enabled |
 | `-e FilePermissions=644` | Based on chmod linux permissions |
 | `-e FolderPermissions=755` | Based on chmod linux permissions |
 
@@ -105,10 +105,10 @@ docker create \
   -e SCRIPTINTERVAL=1h \
   -e SOURCE_CONNECTION=lidarr \
   -e RequireVideoMatch=true \
-  -e videoformat="--format bestvideo[vcodec*=avc1]+bestaudio" \
   -e subtitlelanguage=en \
   -e videofilter=live \
   -e USEFOLDERS=false \
+  -e USEVIDEOFOLDERS=false \
   -e FilePermissions=644 \
   -e FolderPermissions=755 \
   -e MBRAINZMIRROR=https://musicbrainz.org \
@@ -141,10 +141,10 @@ services:
       - SCRIPTINTERVAL=1h
       - SOURCE_CONNECTION=lidarr
       - RequireVideoMatch=true
-      - videoformat="--format bestvideo[vcodec*=avc1]+bestaudio"
       - subtitlelanguage=en
       - videofilter=live
       - USEFOLDERS=false
+      - USEVIDEOFOLDERS=false
       - FilePermissions=644
       - FolderPermissions=755
       - MBRAINZMIRROR=https://musicbrainz.org
