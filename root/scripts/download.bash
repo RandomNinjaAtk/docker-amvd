@@ -2,7 +2,7 @@
 export LC_ALL=C.UTF-8
 export LANG=C.UTF-8
 agent="automated-music-video-downloader ( https://github.com/RandomNinjaAtk/docker-amvd )"
-videoformat="--format bestvideo[ext=mp4]+bestaudio[ext=m4a]"
+
 Configuration () {
 	processstartid="$(ps -A -o pid,cmd|grep "start.bash" | grep -v grep | head -n 1 | awk '{print $1}')"
 	processdownloadid="$(ps -A -o pid,cmd|grep "download.bash" | grep -v grep | head -n 1 | awk '{print $1}')"
@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.27"
+	log "############################################ SCRIPT VERSION 1.1.28"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -110,52 +110,50 @@ Configuration () {
 	fi
 
 
-		# Country Code
-		if [ ! -z "$CountryCode" ]; then
-			log "Music Video Country Code: $CountryCode"
-		else
-			log "ERROR: CountryCode is empty, please configure wtih a valid Country Code (lowercase)"
-			error=1
-		fi
+	# Country Code
+	if [ ! -z "$CountryCode" ]; then
+		log "Music Video Country Code: $CountryCode"
+	else
+		log "ERROR: CountryCode is empty, please configure wtih a valid Country Code (lowercase)"
+		error=1
+	fi
 
-		# RequireVideoMatch
-		if [ "$RequireVideoMatch" = "true" ]; then
-			log "Music Video Require Match: ENABLED"
-		else
-			log "Music Video Require Match: DISABLED"
-		fi
+	# RequireVideoMatch
+	if [ "$RequireVideoMatch" = "true" ]; then
+		log "Music Video Require Match: ENABLED"
+	else
+		log "Music Video Require Match: DISABLED"
+	fi
 
-		# videoformat
-		if [ ! -z "$videoformat" ]; then
-			log "Music Video Format Set To: $videoformat"
-		else
-			log "Music Video Format Set To: --format bestvideo[vcodec*=avc1]+bestaudio[ext=m4a]"
-		fi
+	# videoformat
+	if [ ! -z "$videoformat" ]; then
+		log "Music Video Format Set To: $videoformat"
+	else
+		log "Music Video Format Set To: --format bestvideo[vcodec*=avc1][ext=mp4]+bestaudio[ext=m4a]"
+		videoformat="--format bestvideo[vcodec*=avc1][ext=mp4]+bestaudio[ext=m4a]"
+	fi
 
-		# videofilter
-		if [ ! -z "$videofilter" ]; then
-			log "Music Video Filter: ENABLED ($videofilter)"
-		else
-			log "Music Video Filter: DISABLED"
-		fi
+	# videofilter
+	if [ ! -z "$videofilter" ]; then
+		log "Music Video Filter: ENABLED ($videofilter)"
+	else
+		log "Music Video Filter: DISABLED"
+	fi
 
-		# subtitlelanguage
-		if [ ! -z "$subtitlelanguage" ]; then
-			subtitlelanguage="${subtitlelanguage,,}"
-			log "Music Video Subtitle Language: $subtitlelanguage"
-		else
-			subtitlelanguage="en"
-			log "Music Video Subtitle Language: $subtitlelanguage"
-		fi
+	# subtitlelanguage
+	if [ ! -z "$subtitlelanguage" ]; then
+		subtitlelanguage="${subtitlelanguage,,}"
+		log "Music Video Subtitle Language: $subtitlelanguage"
+	else
+		subtitlelanguage="en"
+		log "Music Video Subtitle Language: $subtitlelanguage"
+	fi
 
-		if [ "$WriteNFOs" == "true" ]; then
-			log "Music Video NFO Writer: ENABLED"
-		else
-			log "Music Video NFO Writer: DISABLED"
-		fi
-
-		log "Music Video Extension: mkv"
-
+	if [ "$WriteNFOs" == "true" ]; then
+		log "Music Video NFO Writer: ENABLED"
+	else
+		log "Music Video NFO Writer: DISABLED"
+	fi
 
 	if [ ! -z "$USEFOLDERS" ]; then
 		if [ "$USEFOLDERS" == "true" ]; then
@@ -166,6 +164,11 @@ Configuration () {
 				log "WARNING: FolderPermissions not set, using default..."
 				FolderPermissions="755"
 				log "Music Video Foldder Permissions: $FolderPermissions"
+			fi
+			if [ "$USEVIDEOFOLDERS" == "true" ]; then
+				log "Music Video Use Video Folders: ENABLED"
+			else
+				log "Music Video Use Video Folders: DISABLED"
 			fi
 		else
 			log "Music Video Use Folders: DISABLED"
@@ -441,10 +444,6 @@ DownloadVideos () {
 		cookies=""
 	fi
 
-	if [ -z "$videoformat" ]; then
-		videoformat="--format bestvideo[vcodec*=avc1]+bestaudio[ext=m4a]"
-	fi
-
 	if [ -z "$videofilter" ]; then
 		videofilter=""
 	fi
@@ -661,7 +660,9 @@ DownloadVideos () {
 			VideoDownload
 
 			if [ "WriteNFOs" == "true" ]; then
-				VideoNFOWriter
+				if [ -f "${filelocation}.mp4" ]; then
+					VideoNFOWriter
+				fi
 			else
 				if find "$destination" -type f -iname "*.jpg" | read; then
 					rm "$destination"/*.jpg
@@ -672,7 +673,7 @@ DownloadVideos () {
 			fi
 			done
 	done
-	downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanitizedartistname - *.mkv" | wc -l)
+	downloadcount=$(find "$destination" -mindepth 1 -maxdepth 2 -type f -iname "$sanitizedartistname - *.mp4" | wc -l)
 	log "$artistnumber of $artisttotal :: $artistname :: $downloadcount Videos Downloaded!"
 	log "$artistnumber of $artisttotal :: $artistname :: MARKING ARTIST AS COMPLETE"
 	touch "/config/cache/$sanitizedartistname-$mbid-download-complete"
@@ -681,8 +682,8 @@ DownloadVideos () {
 
 VideoNFOWriter () {
 
-	if [ -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
-		if [ ! -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.nfo" ]; then
+	if [ -f "${filelocation}.mp4" ]; then
+		if [ ! -f "${filelocation}.nfo" ]; then
 			if [ "$videoyear" != "null" ]; then
 				year="$videoyear"
 			else
@@ -693,8 +694,8 @@ VideoNFOWriter () {
 			else
 				album=""
 			fi
-			if [ -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" ]; then
-				thumb="$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+			if [ -f "${filelocation}.jpg" ]; then
+				thumb="${thumbnailname}.jpg"
 			else
 				thumb=""
 			fi
@@ -731,7 +732,7 @@ VideoNFOWriter () {
 				track=""
 			fi
 			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
-cat <<EOF > "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.nfo"
+cat <<EOF > "${filelocation}.nfo"
 <musicvideo>
 	<title>${videotitle}${nfovideodisambiguation}</title>
 	<userrating>$youtubeaveragerating</userrating>
@@ -933,103 +934,124 @@ VideoDownload () {
 			chmod $FolderPermissions "$destination"
 			chown abc:abc "$destination"
 		fi
-	else
-		destination="$LIBRARY"
-	fi
-
-	if [ ! -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
-		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
-		log "=======================START YOUTUBE-DL========================="
-		youtube-dl ${cookies} -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mp4 --no-mtime --geo-bypass "$youtubeurl"
-		log "========================STOP YOUTUBE-DL========================="
-		if [ -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
-			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
-			audiochannels="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels")"
-			width="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
-			height="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
-			if [[ "$width" -ge "3800" || "$height" -ge "2100" ]]; then
-				videoquality=3
-				qualitydescription="UHD"
-			elif [[ "$width" -ge "1900" || "$height" -ge "1060" ]]; then
-				videoquality=2
-				qualitydescription="FHD"
-			elif [[ "$width" -ge "1260" || "$height" -ge "700" ]]; then
-				videoquality=1
-				qualitydescription="HD"
-			else
-				videoquality=0
-				qualitydescription="SD"
-			fi
-
-			if [ "$audiochannels" -ge "3" ]; then
-				channelcount=$(( $audiochannels - 1 ))
-				audiodescription="${audiochannels}.1 Channel"
-			elif [ "$audiochannels" == "2" ]; then
-				audiodescription="Stereo"
-			elif [ "$audiochannels" == "1" ]; then
-				audiodescription="Mono"
-			fi
-
-			if [ ! -z "$videoimage" ]; then
-				curl -s "$videoimage" -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
-			fi
-
-			if [ ! -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" ]; then
-				ffmpeg -y \
-					-i "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
-					-vframes 1 -an -s 640x360 -ss 30 \
-					"$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" &> /dev/null
-			fi
-
-			if [ ! -z "$videodirectors" ]; then
-				mkvdirector="$(echo "$videodrectors" | head -n 1)"
-				mkvdirectormetadata="-metadata DIRECTOR="$videodrectors""
-			else
-				mkvdirectormetadata=""
-			fi
-			mv "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" "$destination/temp.mp4"
-			cp "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$destination/cover.jpg"
-			log "========================START FFMPEG========================"
-			ffmpeg -y \
-				-i "$destination/temp.mp4" \
-				-c copy \
-				-metadata ENCODED_BY="AMVD" \
-				-metadata:s:v:0 title="$qualitydescription" \
-				-metadata:s:a:0 title="$audiodescription" \
-				-movflags faststart \
-				"$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
-			log "========================STOP FFMPEG========================="
-			echo "========================START TAGGING========================"
-			python3 /config/scripts/tag.py \
-				--file "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
-				--songtitle "${videotitle}${nfovideodisambiguation}" \
-				--songalbum "$album" \
-				--songartist "$artistname" \
-				--songartistalbum "$LidArtistNameCap" \
-				--songtracknumber "$track" \
-				--songgenre "$genre" \
-				--songdate "$year" \
-				--quality "$videoquality" \
-				--songartwork "$destination/cover.jpg"
-			echo "========================STOP TAGGING========================="
-			rm "$destination/cover.jpg"
-			rm "$destination/temp.mp4"
-			chmod $FilePermissions "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
-
-			# reset language
-			releaselanguage="null"
-
-			log "Video :: Downloaded :: $db :: ${artistname} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
+		if [ "$USEVIDEOFOLDERS" == "true" ]; then
+			filelocation="$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}/${sanitizevideotitle}${sanitizedvideodisambiguation}"
+			thumbnailname="${sanitizevideotitle}${sanitizedvideodisambiguation}"
 		else
-			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Downloaded Failed!"
+			filelocation="$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}"
+			thumbnailname="$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}"
 		fi
 	else
+		destination="$LIBRARY"
+		filelocation="$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}"
+		thumbnailname="$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}"
+	fi
+	
+	if [ -f "${filelocation}.mp4" ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} ::  ${videotitle}${nfovideodisambiguation} already downloaded!"
 		if cat "/config/logs/download.log" | grep -i ":: $youtubeid ::" | read; then
 			sleep 0.1
 		else
 			log "Video :: Downloaded :: $db :: ${artistname} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
 		fi
+		continue
+	fi
+
+
+	log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
+	log "=======================START YOUTUBE-DL========================="
+	youtube-dl ${cookies} -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mp4 --no-mtime --geo-bypass "$youtubeurl"
+	log "========================STOP YOUTUBE-DL========================="
+	if [ -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
+		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
+		audiochannels="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels")"
+		width="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
+		height="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
+		if [[ "$width" -ge "3800" || "$height" -ge "2100" ]]; then
+			videoquality=3
+			qualitydescription="UHD"
+		elif [[ "$width" -ge "1900" || "$height" -ge "1060" ]]; then
+			videoquality=2
+			qualitydescription="FHD"
+		elif [[ "$width" -ge "1260" || "$height" -ge "700" ]]; then
+			videoquality=1
+			qualitydescription="HD"
+		else
+			videoquality=0
+			qualitydescription="SD"
+		fi
+
+		if [ "$audiochannels" -ge "3" ]; then
+			channelcount=$(( $audiochannels - 1 ))
+			audiodescription="${audiochannels}.1 Channel"
+		elif [ "$audiochannels" == "2" ]; then
+			audiodescription="Stereo"
+		elif [ "$audiochannels" == "1" ]; then
+			audiodescription="Mono"
+		fi
+
+		if [ ! -z "$videoimage" ]; then
+			curl -s "$videoimage" -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+		fi
+
+		if [ ! -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" ]; then
+			ffmpeg -y \
+				-i "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
+				-vframes 1 -an -s 640x360 -ss 30 \
+				"$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" &> /dev/null
+		fi
+
+		if [ ! -z "$videodirectors" ]; then
+			mkvdirector="$(echo "$videodrectors" | head -n 1)"
+			mkvdirectormetadata="-metadata DIRECTOR="$videodrectors""
+		else
+			mkvdirectormetadata=""
+		fi
+		mv "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" "$destination/temp.mp4"
+		cp "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$destination/cover.jpg"
+		log "========================START FFMPEG========================"
+		ffmpeg -y \
+			-i "$destination/temp.mp4" \
+			-map 0 \
+			-c copy \
+			-metadata ENCODED_BY="AMVD" \
+			-metadata:s:v:0 title="$qualitydescription" \
+			-metadata:s:a:0 title="$audiodescription" \
+			-movflags faststart \
+			"$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
+		log "========================STOP FFMPEG========================="
+		echo "========================START TAGGING========================"
+		python3 /config/scripts/tag.py \
+			--file "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
+			--songtitle "${videotitle}${nfovideodisambiguation}" \
+			--songalbum "$album" \
+			--songartist "$artistname" \
+			--songartistalbum "$artistname" \
+			--songtracknumber "$track" \
+			--songgenre "$genre" \
+			--songdate "$year" \
+			--quality "$videoquality" \
+			--songartwork "$destination/cover.jpg"
+		echo "========================STOP TAGGING========================="
+		rm "$destination/cover.jpg"
+		rm "$destination/temp.mp4"
+		chmod $FilePermissions "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
+		if [ "$USEVIDEOFOLDERS" == "true" ]; then
+			if [ ! -d "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}" ]; then
+				mkdir -p "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}"
+				chmod $FolderPermissions "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}"
+				chown abc:abc "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}"
+			fi
+			mv "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}/${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" 
+			mv "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}/${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+		fi
+	
+		# reset language
+		releaselanguage="null"
+
+		log "Video :: Downloaded :: $db :: ${artistname} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
+	else
+		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Downloaded Failed!"
 	fi
 }
 
@@ -1057,7 +1079,7 @@ LidarrConnection () {
 		DownloadVideos
 
 	done
-	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 2 -type f -iname "*.mkv" | wc -l)
+	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 3 -type f -iname "*.mp4" | wc -l)
 	log "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
 }
 
