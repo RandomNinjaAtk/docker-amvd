@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.28"
+	log "############################################ SCRIPT VERSION 1.1.29"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -566,7 +566,7 @@ DownloadVideos () {
 	if [ $videocount = 0 ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: Skipping..."
 		if [ ! -z "$imvdburl" ]; then
-			downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanitizedartistname - *.mkv" | wc -l)
+			downloadcount=$(find "$destination" -mindepth 1 -maxdepth 3 -type f -iname "*.mp4" | wc -l)
 			log "$artistnumber of $artisttotal :: $artistname :: $downloadcount Videos Downloaded!"
 			log "$artistnumber of $artisttotal :: $artistname :: MARKING ARTIST AS COMPLETE"
 			touch "/config/cache/$sanitizedartistname-$mbid-download-complete"
@@ -582,7 +582,7 @@ DownloadVideos () {
 	if [ $videocount = 0 ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: Skipping..."
 		if [ ! -z "$imvdburl" ]; then
-			downloadcount=$(find "$destination" -mindepth 1 -maxdepth 1 -type f -iname "$sanitizedartistname - *.mkv" | wc -l)
+			downloadcount=$(find "$destination" -mindepth 1 -maxdepth 3 -type f -iname "*.mp4" | wc -l)
 			log "$artistnumber of $artisttotal :: $artistname :: $downloadcount Videos Downloaded!"
 			log "$artistnumber of $artisttotal :: $artistname :: MARKING ARTIST AS COMPLETE"
 			touch "/config/cache/$sanitizedartistname-$mbid-download-complete"
@@ -673,7 +673,7 @@ DownloadVideos () {
 			fi
 			done
 	done
-	downloadcount=$(find "$destination" -mindepth 1 -maxdepth 2 -type f -iname "$sanitizedartistname - *.mp4" | wc -l)
+	downloadcount=$(find "$destination" -mindepth 1 -maxdepth 3 -type f -iname "*.mp4" | wc -l)
 	log "$artistnumber of $artisttotal :: $artistname :: $downloadcount Videos Downloaded!"
 	log "$artistnumber of $artisttotal :: $artistname :: MARKING ARTIST AS COMPLETE"
 	touch "/config/cache/$sanitizedartistname-$mbid-download-complete"
@@ -1020,7 +1020,7 @@ VideoDownload () {
 			-movflags faststart \
 			"$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
 		log "========================STOP FFMPEG========================="
-		echo "========================START TAGGING========================"
+		log "========================START TAGGING========================"
 		python3 /config/scripts/tag.py \
 			--file "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
 			--songtitle "${videotitle}${nfovideodisambiguation}" \
@@ -1032,7 +1032,7 @@ VideoDownload () {
 			--songdate "$year" \
 			--quality "$videoquality" \
 			--songartwork "$destination/cover.jpg"
-		echo "========================STOP TAGGING========================="
+		log "========================STOP TAGGING========================="
 		rm "$destination/cover.jpg"
 		rm "$destination/temp.mp4"
 		chmod $FilePermissions "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
@@ -1110,7 +1110,7 @@ AMAConnection () {
 		DownloadVideos
 
 	done
-	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 2 -type f -iname "*.mkv" | wc -l)
+	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 3 -type f -iname "*.mp4" | wc -l)
 	log "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
 }
 
