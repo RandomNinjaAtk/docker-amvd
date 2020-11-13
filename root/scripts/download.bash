@@ -2,7 +2,7 @@
 export LC_ALL=C.UTF-8
 export LANG=C.UTF-8
 agent="automated-music-video-downloader ( https://github.com/RandomNinjaAtk/docker-amvd )"
-
+videoformat="--format bestvideo[ext=mp4]+bestaudio[ext=m4a]"
 Configuration () {
 	processstartid="$(ps -A -o pid,cmd|grep "start.bash" | grep -v grep | head -n 1 | awk '{print $1}')"
 	processdownloadid="$(ps -A -o pid,cmd|grep "download.bash" | grep -v grep | head -n 1 | awk '{print $1}')"
@@ -17,7 +17,7 @@ Configuration () {
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
-	
+
 	if [ "$AUTOSTART" == "true" ]; then
 		log "$TITLESHORT Script Autostart: ENABLED"
 		if [ -z "$SCRIPTINTERVAL" ]; then
@@ -28,7 +28,7 @@ Configuration () {
 	else
 		log "$TITLESHORT Script Autostart: DISABLED"
 	fi
-	
+
 	# Verify Musicbrainz DB Connectivity
 	musicbrainzdbtest=$(curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/artist/f59c5520-5f46-4d2c-b2c4-822eabf53419?fmt=json")
 	musicbrainzdbtestname=$(echo "${musicbrainzdbtest}"| jq -r '.name')
@@ -72,13 +72,13 @@ Configuration () {
 			error=1
 		fi
 	fi
-	
+
 	if [[ "$SOURCE_CONNECTION" != "lidarr" && "$SOURCE_CONNECTION" != "ama" ]]; then
 		log "ERROR :: SOURCE_CONNECTION not configured"
 		log "ERROR :: Set SOURCE_CONNECTION to \"lidarr\" or \"ama\""
 		error=1
 	fi
-	
+
 	if [ "$SOURCE_CONNECTION" == "ama" ]; then
 		log "Music Video Artist List Source: $SOURCE_CONNECTION"
 		if [ ! -d "/ama/list" ]; then
@@ -87,10 +87,10 @@ Configuration () {
 			error=1
 		fi
 	fi
-	
+
 	if [ "$SOURCE_CONNECTION" == "lidarr" ]; then
 		log "Music Video Artist List Source: $SOURCE_CONNECTION"
-		
+
 		# Verify Lidarr Connectivity
 		lidarrtest=$(curl -s "$LidarrUrl/api/v1/system/status?apikey=${LidarrAPIkey}" | jq -r ".version")
 		if [ ! -z "$lidarrtest" ]; then
@@ -153,10 +153,10 @@ Configuration () {
 		else
 			log "Music Video NFO Writer: DISABLED"
 		fi
-		
+
 		log "Music Video Extension: mkv"
 
-	
+
 	if [ ! -z "$USEFOLDERS" ]; then
 		if [ "$USEFOLDERS" == "true" ]; then
 			log "Music Video Use Folders: ENABLED"
@@ -175,14 +175,14 @@ Configuration () {
 		USEFOLDERS="false"
 		log "Music Video Use Folders:: DISABLED"
 	fi
-	
+
 	if [ ! -z "$FilePermissions" ]; then
 		log "Music Video File Permissions: $FilePermissions"
 	else
 		log "ERROR: FilePermissions not set, using default..."
 		FilePermissions="644"
 		log "Music Video File Permissions: $FilePermissions"
-	fi	
+	fi
 
 	if [ $error = 1 ]; then
 		log "Please correct errors before attempting to run script again..."
@@ -235,7 +235,7 @@ CacheEngine () {
 		else
 			log "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Musicbrainz Artist Info Cache Valid..."
 		fi
-		
+
 		records=$(curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/recording?artist=$mbid&limit=1&offset=0&fmt=json")
 		sleep $MBRATELIMIT
 
@@ -432,7 +432,7 @@ CacheEngine () {
 }
 
 DownloadVideos () {
-	
+
 	CountryCodelowercase="$(echo ${CountryCode,,})"
 
 	if [ -f "/config/cookies/cookies.txt" ]; then
@@ -925,7 +925,7 @@ VideoDownload () {
 	else
 		track=""
 	fi
-	
+
 	if [ "$USEFOLDERS" == "true" ]; then
 		destination="$LIBRARY/$artistfolder"
 		if [ ! -d "$destination" ]; then
@@ -936,17 +936,17 @@ VideoDownload () {
 	else
 		destination="$LIBRARY"
 	fi
-	
-	if [ ! -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
+
+	if [ ! -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
 		log "=======================START YOUTUBE-DL========================="
-		youtube-dl ${cookies} -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
+		youtube-dl ${cookies} -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mp4 --no-mtime --geo-bypass "$youtubeurl"
 		log "========================STOP YOUTUBE-DL========================="
-		if [ -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
+		if [ -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
 			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
-			audiochannels="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels")"
-			width="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
-			height="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
+			audiochannels="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels")"
+			width="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
+			height="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
 			if [[ "$width" -ge "3800" || "$height" -ge "2100" ]]; then
 				videoquality=3
 				qualitydescription="UHD"
@@ -976,7 +976,7 @@ VideoDownload () {
 
 			if [ ! -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" ]; then
 				ffmpeg -y \
-					-i "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
+					-i "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
 					-vframes 1 -an -s 640x360 -ss 30 \
 					"$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" &> /dev/null
 			fi
@@ -987,32 +987,35 @@ VideoDownload () {
 			else
 				mkvdirectormetadata=""
 			fi
-			log "========================START MKVPROPEDIT========================"
-			mkvpropedit "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" --add-track-statistics-tags
-			log "========================STOP MKVPROPEDIT========================="
-			mv "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" "$destination/temp.mkv"
+			mv "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" "$destination/temp.mp4"
 			cp "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$destination/cover.jpg"
 			log "========================START FFMPEG========================"
 			ffmpeg -y \
-				-i "$destination/temp.mkv" \
+				-i "$destination/temp.mp4" \
 				-c copy \
-				-metadata TITLE="${videotitle}${nfovideodisambiguation}" \
-				-metadata ARTIST="$artistname" \
-				-metadata DATE_RELEASE="$year" \
-				-metadata GENRE="$genre" \
-				-metadata ALBUM="$album" \
 				-metadata ENCODED_BY="AMVD" \
-				-metadata CONTENT_TYPE="Music Video" \
-				$mkvdirectormetadata \
 				-metadata:s:v:0 title="$qualitydescription" \
 				-metadata:s:a:0 title="$audiodescription" \
-				-attach "$destination/cover.jpg" -metadata:s:t mimetype=image/jpeg \
-				"$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+				-movflags faststart \
+				"$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
 			log "========================STOP FFMPEG========================="
+			echo "========================START TAGGING========================"
+			python3 /config/scripts/tag.py \
+				--file "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
+				--songtitle "${videotitle}${nfovideodisambiguation}" \
+				--songalbum "$album" \
+				--songartist "$artistname" \
+				--songartistalbum "$LidArtistNameCap" \
+				--songtracknumber "$track" \
+				--songgenre "$genre" \
+				--songdate "$year" \
+				--quality "$videoquality" \
+				--songartwork "$destination/cover.jpg"
+			echo "========================STOP TAGGING========================="
 			rm "$destination/cover.jpg"
-			rm "$destination/temp.mkv"
-			chmod $FilePermissions "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
-		
+			rm "$destination/temp.mp4"
+			chmod $FilePermissions "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
+
 			# reset language
 			releaselanguage="null"
 
@@ -1036,43 +1039,43 @@ log () {
 }
 
 LidarrConnection () {
-	
+
 	lidarrdata=$(curl -s --header "X-Api-Key:"${LidarrAPIkey} --request GET  "$LidarrUrl/api/v1/Artist/")
 	artisttotal=$(echo "${lidarrdata}"| jq -r '.[].sortName' | wc -l)
 	lidarrlist=($(echo "${lidarrdata}" | jq -r ".[].foreignArtistId"))
 	CacheEngine
 	log "############################################ YouTube Video Downloads"
-	
+
 	for id in ${!lidarrlist[@]}; do
 		artistnumber=$(( $id + 1 ))
-		mbid="${lidarrlist[$id]}"		
+		mbid="${lidarrlist[$id]}"
 		artistdata=$(echo "${lidarrdata}" | jq -r ".[] | select(.foreignArtistId==\"${mbid}\")")
 		artistname="$(echo "${artistdata}" | jq -r " .artistName")"
 		artistnamepath="$(echo "${artistdata}" | jq -r " .path")"
 		sanitizedartistname="$(basename "${artistnamepath}" | sed 's% (.*)$%%g')"
 		artistfolder="$(basename "${artistnamepath}")"
 		DownloadVideos
-		
+
 	done
 	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 2 -type f -iname "*.mkv" | wc -l)
 	log "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
 }
 
 AMAConnection () {
-	
+
 	log "############################################ YouTube Video Downloads"
 
-	
+
 	artisttotal=$(ls /ama/list/*-lidarr 2> /dev/null | sort -u | wc -l)
-	
+
 	if [ $artisttotal == 0 ]; then
 		log "ERROR :: AMA List Folder contains no compatible artist IDs (####-lidarr)"
 		exit
 	fi
-	
+
 	amalist=($(ls /ama/list/*-lidarr | sort -u))
-	
-		
+
+
 	for id in ${!amalist[@]}; do
 		artistnumber=$(( $id + 1 ))
 		amafile="${amalist[$id]}"
@@ -1083,7 +1086,7 @@ AMAConnection () {
 		artistfolder="$sanitizedartistname ($deezerid)"
 		CacheEngine
 		DownloadVideos
-		
+
 	done
 	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 2 -type f -iname "*.mkv" | wc -l)
 	log "############################################ $totaldownloadcount VIDEOS DOWNLOADED"
