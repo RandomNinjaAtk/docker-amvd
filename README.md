@@ -77,9 +77,6 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e MBRAINZMIRROR="https://musicbrainz.org"` | OPTIONAL :: Only change if using a different mirror |
 | `-e MBRATELIMIT=1` | OPTIONAL: musicbrainz rate limit, musicbrainz allows only 1 connection per second, max setting is 10 |
 | `-e SOURCE_CONNECTION=lidarr` | lidarr or ama :: ama requires the AMA config folder to be mounted as a volume: /ama |
-| `-e usetidal=false` | true = enabled :: This will enable downloading all videos from Tidal for an artist, paid subscription required :: OPTIONAL |
-| `-e tidalusername=yourusername` | REQUIRED for Tidal |
-| `-e tidalpassword=yourpasssword` | REQUIRED for Tidal |
 | `-e CountryCode=us` | Set the country code for preferred video matching, uses Musicbrainz Country Codes, lowercase only. |
 | `-e RequireVideoMatch=true` | true = enabled :: Only keep videos that could be matched to a Musicbrainz music track. |
 | `-e videoformat="--format bestvideo[vcodec*=avc1]+bestaudio"` | For guidence, please see youtube-dl documentation |
@@ -106,9 +103,6 @@ docker create \
   -e PGID=1000 \
   -e AUTOSTART=true \
   -e SCRIPTINTERVAL=1h \
-  -e usetidal=false \
-  -e tidalusername=TIDALUSERNAME \
-  -e tidalpassword=TIDALPASSWORD \
   -e SOURCE_CONNECTION=lidarr \
   -e RequireVideoMatch=true \
   -e videoformat="--format bestvideo[vcodec*=avc1]+bestaudio" \
@@ -146,9 +140,6 @@ services:
       - AUTOSTART=true
       - SCRIPTINTERVAL=1h
       - SOURCE_CONNECTION=lidarr
-      - usetidal=false
-      - tidalusername=TIDALUSERNAME
-      - tidalpassword=TIDALPASSWORD
       - RequireVideoMatch=true
       - videoformat="--format bestvideo[vcodec*=avc1]+bestaudio"
       - subtitlelanguage=en
@@ -192,5 +183,4 @@ services:
 - [youtube-dl](https://ytdl-org.github.io/youtube-dl/index.html)
 - [Lidarr](https://lidarr.audio/)
 - [Musicbrainz](https://musicbrainz.org/)
-- [Tidal-Media-Downloader](https://github.com/yaronzz/Tidal-Media-Downloader)
 - Icons made by <a href="http://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
