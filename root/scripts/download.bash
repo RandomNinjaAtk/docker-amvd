@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.29"
+	log "############################################ SCRIPT VERSION 1.1.30"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -566,7 +566,11 @@ DownloadVideos () {
 	if [ $videocount = 0 ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: Skipping..."
 		if [ ! -z "$imvdburl" ]; then
-			downloadcount=$(find "$destination" -mindepth 1 -maxdepth 3 -type f -iname "*.mp4" | wc -l)
+			if [ "$USEFOLDERS" == "true" ]; then
+				downloadcount=$(find "$destination" -mindepth 1 -maxdepth 3 -type f -iname "*.mp4" | wc -l)
+			else
+				downloadcount=$(find "$destination" -mindepth 1 -maxdepth 3 -type f -iname "$sanitizedartistname - *.mp4" | wc -l)
+			fi
 			log "$artistnumber of $artisttotal :: $artistname :: $downloadcount Videos Downloaded!"
 			log "$artistnumber of $artisttotal :: $artistname :: MARKING ARTIST AS COMPLETE"
 			touch "/config/cache/$sanitizedartistname-$mbid-download-complete"
@@ -582,7 +586,11 @@ DownloadVideos () {
 	if [ $videocount = 0 ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: Skipping..."
 		if [ ! -z "$imvdburl" ]; then
-			downloadcount=$(find "$destination" -mindepth 1 -maxdepth 3 -type f -iname "*.mp4" | wc -l)
+			if [ "$USEFOLDERS" == "true" ]; then
+				downloadcount=$(find "$destination" -mindepth 1 -maxdepth 3 -type f -iname "*.mp4" | wc -l)
+			else
+				downloadcount=$(find "$destination" -mindepth 1 -maxdepth 3 -type f -iname "$sanitizedartistname - *.mp4" | wc -l)
+			fi
 			log "$artistnumber of $artisttotal :: $artistname :: $downloadcount Videos Downloaded!"
 			log "$artistnumber of $artisttotal :: $artistname :: MARKING ARTIST AS COMPLETE"
 			touch "/config/cache/$sanitizedartistname-$mbid-download-complete"
