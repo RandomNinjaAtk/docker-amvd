@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.26"
+	log "############################################ SCRIPT VERSION 1.1.27"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -109,26 +109,6 @@ Configuration () {
 		fi
 	fi
 
-	if [ "$usetidal" == "true" ]; then
-		log "Music Video Tidal Source: ENABLED"
-		if [ -z "$tidalusername" ]; then
-			log "ERROR: tidalusername not provided"
-			error=1
-		elif [ -z "$tidalpassword" ]; then
-			log "ERROR: tidalpassword not provided"
-			error=1
-		else
-			if [ -f "/config/scripts/login" ]; then
-				rm "/config/scripts/login"
-			fi
-			if [ ! -d "/config/logs/tidal" ]; then
-				mkdir -p "/config/logs/tidal"
-			fi
-			echo -e "${tidalusername}\n${tidalpassword}" > "/config/scripts/login"
-			log "Music Video Format Set To: Best Available"
-			log "Music Video Extension: mkv"
-		fi
-	else
 
 		# Country Code
 		if [ ! -z "$CountryCode" ]; then
@@ -176,7 +156,6 @@ Configuration () {
 		
 		log "Music Video Extension: mkv"
 
-	fi
 	
 	if [ ! -z "$USEFOLDERS" ]; then
 		if [ "$USEFOLDERS" == "true" ]; then
@@ -256,11 +235,7 @@ CacheEngine () {
 		else
 			log "${artistnumber} of ${wantedtotal} :: MBZDB CACHE :: $LidArtistNameCap :: Musicbrainz Artist Info Cache Valid..."
 		fi
-
-		if [ "$usetidal" == "true" ]; then
-			touch "/config/cache/$sanitizedartistname-$mbid-cache-complete"
-			continue
-		fi
+		
 		records=$(curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/recording?artist=$mbid&limit=1&offset=0&fmt=json")
 		sleep $MBRATELIMIT
 
@@ -1055,77 +1030,6 @@ VideoDownload () {
 	fi
 }
 
-TidalVideoDownloads () {
-	if [ -f "/config/cache/$sanitizedartistname-$mbid-tidal-download-complete" ]; then
-		if ! [[ $(find "/config/cache/$sanitizedartistname-$mbid-tidal-download-complete" -mtime +7 -print) ]]; then
-			log "$artistnumber of $artisttotal :: $artistname :: TIDAL :: Videos already downloaded according to cache, skipping..."
-			return
-		else
-			log "$artistnumber of $artisttotal :: $artistname :: TIDAL :: Clearing completed download cache..."
-		fi
-	fi
-	if [ ! -f "/config/cache/$sanitizedartistname-$mbid-tidal-download-complete" ]; then
-		if [ ! -z "$tidalurl" ]; then
-			log "$artistnumber of $artisttotal :: $artistname :: $tidalurl :: $tidalartistid"
-			if [ "$USEFOLDERS" == "true" ]; then
-				destination="$LIBRARY/$artistfolder"
-				if [ ! -d "$destination" ]; then
-					mkdir -p "$destination"
-					chmod $FolderPermissions "$destination"
-					chown abc:abc "$destination"
-				fi
-			else
-				destination="$LIBRARY"
-			fi
-				
-				
-			python3 /config/scripts/tvd.py "$tidalartistid" "$sanitizedartistname" "$destination"
-			WORKINGDIR="${PWD}"
-			cd "$destination"
-			OLDIFS="$IFS"
-			IFS=$'\n'
-			videolistbysize=($(find . -type f -iregex ".*\ ([0-9]*).mkv" | sort -u))
-			IFS="$OLDIFS"
-			cd "$WORKINGDIR"
-			for id in ${!videolistbysize[@]}; do
-				currentprocess=$(( $id ))
-				currentprocessplusone=$(( $id + 1 ))
-				videofilename="$destination/${videolistbysize[$id]}"
-				newvideofilename="$(echo "$videofilename" | sed -e 's/ ([0-9]*).mkv$//')"
-				if [[ -e $newvideofilename.mkv || -L $newvideofilename.mkv ]] ; then
-					i=1
-					while [[ -e "$newvideofilename [$i]".mkv || -L "$newvideofilename [$i]".mkv ]] ; do
-						let i++
-					done
-					newvideofilename="$newvideofilename [$i]"
-				fi
-				mv "$videofilename" "$newvideofilename.mkv"
-				chmod $FilePermissions "$newvideofilename.mkv"
-				chown abc:abc "$newvideofilename.mkv"
-			done
-			if [ ! -f "/config/cache/$sanitizedartistname-$mbid-tidal-download-complete" ]; then
-				log "$artistnumber of $artisttotal :: $artistname :: TIDAL :: All Available Videos Downloaded!"
-				touch "/config/cache/$sanitizedartistname-$mbid-tidal-download-complete"
-			fi
-		else
-			if ! [ -f "/config/logs/musicbrainzerror.log" ]; then
-				touch "/config/logs/musicbrainzerror.log"
-			fi
-			if [ -f "/config/logs/musicbrainzerror.log" ]; then
-				log "$artistnumber of $artisttotal :: $artistname :: ERROR: musicbrainz id: $mbid is missing Tidal Artist link, see: \"/config/logs/musicbrainzerror.log\" for more detail..."
-				if cat "/config/logs/musicbrainzerror.log" | grep "/$mbid/" | read; then
-					sleep 0
-				else
-				log "$artistname :: Update Musicbrainz Relationship Page: https://musicbrainz.org/artist/$mbid/relationships with Tidal Artist Link" >> "/config/logs/musicbrainzerror.log"
-				fi
-			fi
-		fi
-	else
-		log "$artistnumber of $artisttotal :: $artistname :: TIDAL :: Videos already downloaded, skipping.."
-		return
-	fi
-}
-
 log () {
     m_time=`date "+%F %T"`
     echo $m_time" "$1
@@ -1136,13 +1040,8 @@ LidarrConnection () {
 	lidarrdata=$(curl -s --header "X-Api-Key:"${LidarrAPIkey} --request GET  "$LidarrUrl/api/v1/Artist/")
 	artisttotal=$(echo "${lidarrdata}"| jq -r '.[].sortName' | wc -l)
 	lidarrlist=($(echo "${lidarrdata}" | jq -r ".[].foreignArtistId"))
-	
-	if [ "$usetidal" == "true" ]; then
-		log "############################################ Tidal Video Downloads"
-	else
-		CacheEngine
-		log "############################################ YouTube Video Downloads"
-	fi
+	CacheEngine
+	log "############################################ YouTube Video Downloads"
 	
 	for id in ${!lidarrlist[@]}; do
 		artistnumber=$(( $id + 1 ))
@@ -1152,23 +1051,7 @@ LidarrConnection () {
 		artistnamepath="$(echo "${artistdata}" | jq -r " .path")"
 		sanitizedartistname="$(basename "${artistnamepath}" | sed 's% (.*)$%%g')"
 		artistfolder="$(basename "${artistnamepath}")"
-		
-		if [ "$usetidal" == "true" ]; then
-			tidalurl=""
-			if [ -z "$tidalurl" ]; then 
-				mbzartistinfo=$(curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/artist/$mbid?inc=url-rels+genres&fmt=json")
-				tidalurl="$(echo "$mbzartistinfo" | jq -r ".relations | .[] | .url | select(.resource | contains(\"tidal\")) | .resource" | head -n 1)"
-				tidalartistid="$(echo "$tidalurl" | grep -o '[[:digit:]]*')"
-				sleep $MBRATELIMIT
-			fi
-			if [ -z "$tidalurl" ]; then 
-				log "$artistnumber of $artisttotal :: $artistname :: TIDAL :: ERROR :: Tidal URL not found!"
-			else
-				TidalVideoDownloads
-			fi
-		else
-			DownloadVideos
-		fi
+		DownloadVideos
 		
 	done
 	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 2 -type f -iname "*.mkv" | wc -l)
@@ -1177,11 +1060,8 @@ LidarrConnection () {
 
 AMAConnection () {
 	
-	if [ "$usetidal" == "true" ]; then
-		log "############################################ Tidal Video Downloads"
-	else
-		log "############################################ YouTube Video Downloads"
-	fi
+	log "############################################ YouTube Video Downloads"
+
 	
 	artisttotal=$(ls /ama/list/*-lidarr 2> /dev/null | sort -u | wc -l)
 	
@@ -1198,32 +1078,11 @@ AMAConnection () {
 		amafile="${amalist[$id]}"
 		deezerid=$(echo "$amafile" | grep -o '[[:digit:]]*')
 		mbid=$(cat $amafile)
-		tidalurl=""
-		if [ -f /ama/cache/artists/$deezerid/$deezerid-info.json ]; then
-			deeezerartistinfo=$(cat /ama/cache/artists/$deezerid/$deezerid-info.json)
-		else
-			deeezerartistinfo=$(curl -sL --fail "https://api.deezer.com/artist/$deezerid")
-		fi
 		artistname="$(echo "$deeezerartistinfo" | jq -r ".name")"
 		sanitizedartistname="$(echo "$artistname" | sed -e 's/[\\/:\*\?"<>\|\x01-\x1F\x7F]//g'  -e "s/  */ /g")"
 		artistfolder="$sanitizedartistname ($deezerid)"
-		if [ "$usetidal" == "true" ]; then
-			tidalurl=""
-			if [ -z "$tidalurl" ]; then 
-				mbzartistinfo=$(curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/artist/$mbid?inc=url-rels+genres&fmt=json")
-				tidalurl="$(echo "$mbzartistinfo" | jq -r ".relations | .[] | .url | select(.resource | contains(\"tidal\")) | .resource" | head -n 1)"
-				tidalartistid="$(echo "$tidalurl" | grep -o '[[:digit:]]*')"
-				sleep $MBRATELIMIT
-			fi
-			if [ -z "$tidalurl" ]; then 
-				log "$artistnumber of $artisttotal :: $artistname :: TIDAL :: ERROR :: Tidal URL not found!"
-			else
-				TidalVideoDownloads
-			fi
-		else
-			CacheEngine
-			DownloadVideos
-		fi
+		CacheEngine
+		DownloadVideos
 		
 	done
 	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 2 -type f -iname "*.mkv" | wc -l)
