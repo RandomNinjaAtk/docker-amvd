@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.30"
+	log "############################################ SCRIPT VERSION 1.1.31"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -972,9 +972,9 @@ VideoDownload () {
 	log "========================STOP YOUTUBE-DL========================="
 	if [ -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
-		audiochannels="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels")"
-		width="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width")"
-		height="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height")"
+		audiochannels="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels" | head -n 1)"
+		width="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width" | head -n 1)"
+		height="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height" | head -n 1)"
 		if [[ "$width" -ge "3800" || "$height" -ge "2100" ]]; then
 			videoquality=3
 			qualitydescription="UHD"
