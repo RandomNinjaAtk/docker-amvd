@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.31"
+	log "############################################ SCRIPT VERSION 1.1.32"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -414,9 +414,10 @@ CacheEngine () {
 				for id in ${!imvdbarurllist[@]}; do
 					urlnumber=$(( $id + 1 ))
 					url="${imvdbarurllist[$id]}"
-					imvdbvideoid=$(curl -s "$url" | grep -Eoi '<a [^>]+>' |  grep -Eo 'href="[^\"]+"' | grep -Eo '(http|https)://[^"]+' | grep "sandbox" | sed 's/^.*%2F//')
+					imvdbvideoid=$(curl -s "$url" | grep -Eoi '<img [^>]+>' |  grep -Eo 'src="[^\"]+"' | grep -Eo '(http|https)://[^"]+' | grep "/video/" | grep -o '[[:digit:]]*' | grep -o -w '\w\{6,20\}' | head -n1)
 					log "$artistnumber of $wantedtotal :: IMVDB CACHE :: $LidArtistNameCap :: Downloading Release $urlnumber Info"
 					curl -s "https://imvdb.com/api/v1/video/$imvdbvideoid?include=sources" -o "/config/temp/$mbid-imvdb-$urlnumber.json"
+					sleep 0.1
 				done
 				if [ ! -f "/config/cache/$sanitizedartistname-$mbid-imvdb.json" ]; then
 					jq -s '.' /config/temp//$mbid-imvdb-*.json > "/config/cache/$sanitizedartistname-$mbid-imvdb.json"
