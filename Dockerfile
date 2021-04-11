@@ -10,12 +10,12 @@ RUN \
 	echo "************ install dependencies ************" && \
 	echo "************ install & upgrade packages ************" && \
 	apt-get update -y && \
-	apt-get upgrade -y && \
 	apt-get install -y --no-install-recommends \
 		jq \
 		python3 \
 		python3-pip \
 		ffmpeg \
+		tidy \
 		mkvtoolnix && \
 	rm -rf \
 		/tmp/* \
@@ -24,7 +24,8 @@ RUN \
 	echo "************ install python packages ************" && \
 	python3 -m pip install --no-cache-dir -U \
 		youtube_dl \
-		mutagen
+		mutagen \
+		tidal-dl
 
 # copy local files
 COPY root/ /
