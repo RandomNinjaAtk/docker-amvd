@@ -979,7 +979,7 @@ VideoDownload () {
 		else
 			log "Video :: Downloaded :: $db :: ${artistname} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
 		fi
-		continue
+		return
 	fi
 
 
