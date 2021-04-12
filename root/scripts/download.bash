@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.32"
+	log "############################################ SCRIPT VERSION 1.1.33"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -668,7 +668,7 @@ DownloadVideos () {
 
 			VideoDownload
 
-			if [ "WriteNFOs" == "true" ]; then
+			if [ "$WriteNFOs" == "true" ]; then
 				if [ -f "${filelocation}.mp4" ]; then
 					VideoNFOWriter
 				fi
@@ -693,20 +693,23 @@ VideoNFOWriter () {
 
 	if [ -f "${filelocation}.mp4" ]; then
 		if [ ! -f "${filelocation}.nfo" ]; then
-			if [ "$videoyear" != "null" ]; then
-				year="$videoyear"
+			nfo="${filelocation}.nfo"
+			echo "<musicvideo>" >> "$nfo"
+			echo "	<title>${videotitle}${nfovideodisambiguation}</title>" >> "$nfo"
+			echo "	<userrating>$youtubeaveragerating</userrating>" >> "$nfo"
+			if [ "$trackmatch" = "true" ]; then
+				echo "	<track>$videotrackposition</track>" >> "$nfo"
 			else
-				year=""
+				echo "	<track/>" >> "$nfo"
 			fi
 			if [ "$videoalbum" != "null" ]; then
-				album="$videoalbum"
+				echo "	<album>$videoalbum</album>" >> "$nfo"
 			else
-				album=""
+				echo "	<album>Music Videos</album>" >> "$nfo"
 			fi
-			if [ -f "${filelocation}.jpg" ]; then
-				thumb="${thumbnailname}.jpg"
-			else
-				thumb=""
+			echo "	<plot/>" >> "$nfo"
+			if [ ! -z "$imvdbid" ]; then
+				echo "	<imvdbid>$imvdbid</imvdbid>" >> "$nfo"
 			fi
 			# Genre
 			if [ ! -z "$videogenres" ]; then
@@ -716,47 +719,60 @@ VideoNFOWriter () {
 				IFS=$(echo -en "\n\b")
 				for f in $genres
 				do
-					OUT=$OUT"    <genre>$f</genre>\n"
+					echo "	<genre>${f,,}</genre>" >> "$nfo"
 				done
 				IFS=$SAVEIFS
-				genre="$(echo -e "$OUT")"
+			else
+				OLDIFS="$IFS"
+				IFS=$'\n'
+				artistgenres=($(cat "/config/cache/$sanitizedartistname-$mbid-info.json" | jq -r ".genres[].name"))
+				IFS="$OLDIFS"
+				for genre in ${!artistgenres[@]}; do
+					artistgenre="${artistgenres[$genre]}"
+					echo "	<genre>$artistgenre</genre>" >> "$nfo"
+				done
 			fi
-
 			if [ ! -z "$videodirectors" ]; then
 				OUT=""
 				SAVEIFS=$IFS
 				IFS=$(echo -en "\n\b")
 				for f in $videodirectors
 				do
-					OUT=$OUT"    <director>$f</director>\n"
+					echo "	<director>$f</director>" >> "$nfo"
 				done
 				IFS=$SAVEIFS
-				director="$(echo -e "$OUT")"
 			else
-				director="    <director></director>"
+				director="    <director/>" >> "$nfo"
 			fi
+			
 			if [ "$trackmatch" = "true" ]; then
-				track="$videotrackposition"
+				echo "	<premiered>$releasegroupdate</premiered>" >> "$nfo"
 			else
-				track=""
+				echo "	<premiered/>" >> "$nfo"
 			fi
+			if [ "$videoyear" != "null" ]; then
+				echo "	<year>$videoyear</year>" >> "$nfo"
+			else
+				echo "	<year/>" >> "$nfo"
+			fi
+			echo "	<studio/>" >> "$nfo"
+			echo "	<artist>$artistname</artist>" >> "$nfo"
+			echo "	<musicBrainzArtistID>$mbid</musicBrainzArtistID>" >> "$nfo"
+			artistcountry="$(cat "/config/cache/$sanitizedartistname-$mbid-info.json" | jq -r ".country")"
+			if [ ! -z "$artistcountry" ]; then
+				echo "	<country>$artistcountry</country>" >> "$nfo"
+			else
+				echo "	<country/>" >> "$nfo"
+			fi
+			if [ -f "${filelocation}.jpg" ]; then
+				echo "	<thumb>${thumbnailname}.jpg</thumb>" >> "$nfo"
+			else
+				echo "	<thumb/>" >> "$nfo"
+			fi
+			echo "</musicvideo>" >> "$nfo"
+			tidy -w 2000 -i -m -xml "$nfo" &>/dev/null
 			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
-cat <<EOF > "${filelocation}.nfo"
-<musicvideo>
-	<title>${videotitle}${nfovideodisambiguation}</title>
-	<userrating>$youtubeaveragerating</userrating>
-	<track>$track</track>
-	<album>$album</album>
-	<plot></plot>
-$genre
-$director
-	<premiered></premiered>
-	<year>$year</year>
-	<studio></studio>
-	<artist>$artistname</artist>
-	<thumb>$thumb</thumb>
-</musicvideo>
-EOF
+			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
 		fi
 	fi
 
@@ -1030,17 +1046,32 @@ VideoDownload () {
 			"$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4"
 		log "========================STOP FFMPEG========================="
 		log "========================START TAGGING========================"
-		python3 /config/scripts/tag.py \
-			--file "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
-			--songtitle "${videotitle}${nfovideodisambiguation}" \
-			--songalbum "$album" \
-			--songartist "$artistname" \
-			--songartistalbum "$artistname" \
-			--songtracknumber "$track" \
-			--songgenre "$genre" \
-			--songdate "$year" \
-			--quality "$videoquality" \
-			--songartwork "$destination/cover.jpg"
+		if [ "$trackmatch" = "true" ]; then
+			echo "match"
+			python3 /config/scripts/tag.py \
+				--file "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
+				--songtitle "${videotitle}${nfovideodisambiguation}" \
+				--songalbum "$album" \
+				--songartist "$artistname" \
+				--songartistalbum "$artistname" \
+				--songtracknumber "$track" \
+				--songgenre "$genre" \
+				--songdate "$year" \
+				--quality "$videoquality" \
+				--songartwork "$destination/cover.jpg"
+		else
+			echo "non-match"
+			python3 /config/scripts/tag.py \
+				--file "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
+				--songtitle "${videotitle}${nfovideodisambiguation}" \
+				--songalbum "Music Videos" \
+				--songartist "$artistname" \
+				--songartistalbum "$artistname" \
+				--songtracknumber "0" \
+				--songdate "$year" \
+				--quality "$videoquality" \
+				--songartwork "$destination/cover.jpg"
+		fi
 		log "========================STOP TAGGING========================="
 		rm "$destination/cover.jpg"
 		rm "$destination/temp.mp4"
