@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.33"
+	log "############################################ SCRIPT VERSION 1.1.34"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -1047,7 +1047,6 @@ VideoDownload () {
 		log "========================STOP FFMPEG========================="
 		log "========================START TAGGING========================"
 		if [ "$trackmatch" = "true" ]; then
-			echo "match"
 			python3 /config/scripts/tag.py \
 				--file "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
 				--songtitle "${videotitle}${nfovideodisambiguation}" \
@@ -1060,7 +1059,6 @@ VideoDownload () {
 				--quality "$videoquality" \
 				--songartwork "$destination/cover.jpg"
 		else
-			echo "non-match"
 			python3 /config/scripts/tag.py \
 				--file "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" \
 				--songtitle "${videotitle}${nfovideodisambiguation}" \
