@@ -39,8 +39,10 @@ audio["\xa9alb"] = [album]
 audio["\xa9ART"] = [artist]
 audio["aART"] = [artistalbum]
 audio["\xa9day"] = [date]
-audio["\xa9gen"] = [genre]
-audio["trkn"] = [tracknumber]
+if genre:
+    audio["\xa9gen"] = [genre]
+if tracknumber == 0:
+    audio["trkn"] = [tracknumber]
 audio["hdvd"] = [videoquality]
 audio["stik"] = [6]
 with open(picture, "rb") as f:
