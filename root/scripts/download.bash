@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.35"
+	log "############################################ SCRIPT VERSION 1.1.36"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -945,6 +945,19 @@ VideoDownload () {
 		done
 		IFS=$SAVEIFS
 		genre="${OUT%???}"
+		genre="${genre,,}"
+	else
+		OLDIFS="$IFS"
+		IFS=$'\n'
+		artistgenres=($(cat "/config/cache/$sanitizedartistname-$mbid-info.json" | jq -r ".genres[].name"))
+		IFS="$OLDIFS"
+		for genre in ${!artistgenres[@]}; do
+			artistgenre="${artistgenres[$genre]}"
+			OUT=$OUT"$artistgenre / "
+		done
+		genre="${OUT%???}"
+		genre="${genre,,}"
+		
 	fi
 	if [ "$trackmatch" = "true" ]; then
 		track="$videotrackposition"
@@ -1066,6 +1079,7 @@ VideoDownload () {
 				--songartist "$artistname" \
 				--songartistalbum "$artistname" \
 				--songtracknumber "0" \
+				--songgenre "$genre" \
 				--songdate "$year" \
 				--quality "$videoquality" \
 				--songartwork "$destination/cover.jpg"
