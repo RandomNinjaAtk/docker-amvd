@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.34"
+	log "############################################ SCRIPT VERSION 1.1.35"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -491,15 +491,15 @@ DownloadVideos () {
 			sanitizevideotitle="$(echo "$videotitle"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g")"
 			youtubeid="$(echo "$imvdbvideodata" | jq -r ".sources[] | select(.source==\"youtube\") | .source_data" | head -n 1)"
 			youtubeurl="https://www.youtube.com/watch?v=$youtubeid"
-			if ! [ -f "/config/logs/download.log" ]; then
-				touch "/config/logs/download.log"
+			if ! [ -f "/config/logs/download.txt" ]; then
+				touch "/config/logs/download.txt"
 			fi
-			if cat "/config/logs/download.log" | grep -i ":: $youtubeid ::" | read; then
-				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
+			if cat "/config/logs/download.txt" | grep -i ":: $youtubeid ::" | read; then
+				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.txt)"
 				continue
 			fi
-			if cat "/config/logs/download.log" | grep -i "$youtubeurl" | read; then
-				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
+			if cat "/config/logs/download.txt" | grep -i "$youtubeurl" | read; then
+				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.txt)"
 				continue
 			fi
 
@@ -609,11 +609,11 @@ DownloadVideos () {
 		dlurl=($(echo "$videorecordsfile" | jq -r "select(.id==\"$mbrecordid\") | .relations | .[] | .url | .resource" | sort -u))
 		sanitizevideotitle="$(echo "${videotitle}"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g")"
 		sanitizedvideodisambiguation="$(echo "${videodisambiguation}"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g")"
-		if ! [ -f "/config/logs/download.log" ]; then
-			touch "/config/logs/download.log"
+		if ! [ -f "/config/logs/download.txt" ]; then
+			touch "/config/logs/download.txt"
 		fi
-		if cat "/config/logs/download.log" | grep -i ".* :: ${mbrecordid} :: .*" | read; then
-			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
+		if cat "/config/logs/download.txt" | grep -i ".* :: ${mbrecordid} :: .*" | read; then
+			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.txt)"
 			return
 		fi
 
@@ -624,8 +624,8 @@ DownloadVideos () {
 			else
 				continue
 			fi
-			if cat "/config/logs/download.log" | grep -i "$recordurl" | read; then
-				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
+			if cat "/config/logs/download.txt" | grep -i "$recordurl" | read; then
+				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.txt)"
 				break
 			fi
 			youtubedata="$(python3 /usr/local/bin/youtube-dl ${cookies} -j $recordurl 2> /dev/null)"
@@ -642,12 +642,12 @@ DownloadVideos () {
 			if [ -z "$youtubeid" ]; then
 				continue
 			fi
-			if cat "/config/logs/download.log" | grep -i ":: $youtubeid ::" | read; then
-				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
+			if cat "/config/logs/download.txt" | grep -i ":: $youtubeid ::" | read; then
+				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.txt)"
 				break
 			fi
-			if cat "/config/logs/download.log" | grep -i "$youtubeurl" | read; then
-				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.log)"
+			if cat "/config/logs/download.txt" | grep -i "$youtubeurl" | read; then
+				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Already downloaded... (see: /config/logs/download.txt)"
 				break
 			fi
 				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ${videotitle}${nfovideodisambiguation} :: Checking for match"
@@ -974,10 +974,10 @@ VideoDownload () {
 	
 	if [ -f "${filelocation}.mp4" ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} ::  ${videotitle}${nfovideodisambiguation} already downloaded!"
-		if cat "/config/logs/download.log" | grep -i ":: $youtubeid ::" | read; then
+		if cat "/config/logs/download.txt" | grep -i ":: $youtubeid ::" | read; then
 			sleep 0.1
 		else
-			log "Video :: Downloaded :: $db :: ${artistname} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
+			log "Video :: Downloaded :: $db :: ${artistname} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.txt"
 		fi
 		return
 	fi
@@ -1087,7 +1087,7 @@ VideoDownload () {
 		# reset language
 		releaselanguage="null"
 
-		log "Video :: Downloaded :: $db :: ${artistname} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.log"
+		log "Video :: Downloaded :: $db :: ${artistname} :: $youtubeid :: $youtubeurl :: ${videotitle}${nfovideodisambiguation}" >> "/config/logs/download.txt"
 	else
 		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Downloaded Failed!"
 	fi
