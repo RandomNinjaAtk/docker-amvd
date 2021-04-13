@@ -3,7 +3,7 @@ LABEL maintainer="RandomNinjaAtk"
 
 ENV TITLE="Automated Music Video Downloader (AMVD)"
 ENV TITLESHORT="AMVD"
-ENV VERSION="1.0.6"
+ENV VERSION="1.0.7"
 ENV MBRAINZMIRROR="https://musicbrainz.org"
 
 RUN \
@@ -25,7 +25,8 @@ RUN \
 	python3 -m pip install --no-cache-dir -U \
 		youtube_dl \
 		mutagen \
-		tidal-dl
+		tidal-dl \
+		yq
 
 # copy local files
 COPY root/ /
