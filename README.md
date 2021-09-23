@@ -80,7 +80,7 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e CountryCode=us` | Set the country code for preferred video matching, uses Musicbrainz Country Codes, lowercase only. |
 | `-e RequireVideoMatch=true` | true = enabled :: Only keep videos that could be matched to a Musicbrainz music track. |
 | `-e subtitlelanguage="en"` | Desired Language Code :: For guidence, please see youtube-dl documentation. |
-| `-e videofilter="live"` | This will filter out videos Matching MusicBrainz secondary release type and album disambiguation (single word only) |
+| `-e videofilter="live"` | This will exclude videos Matching MusicBrainz secondary release type and album disambiguation (single word only) |
 | `-e WriteNFOs="false"` | true = enabled :: Create NFO and Local Thumbnail for use in applications such as Kodi |
 | `-e USEFOLDERS=false` | true = enabled :: Creates subfolders using the Lidarr Artist folder name |
 | `-e USEVIDEOFOLDERS=false` | true = enabled :: Creates subfolders using Video File Name only, requires USEFOLDERS to be enabled |
