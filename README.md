@@ -115,6 +115,7 @@ docker create \
   -e MBRATELIMIT=1 \
   -e LidarrUrl=http://127.0.0.1:8686 \
   -e LidarrAPIkey=LIDARRAPI \
+  -e CountryCode=us \
   --restart unless-stopped \
   randomninjaatk/amvd 
 ```
@@ -151,6 +152,7 @@ services:
       - MBRATELIMIT=1
       - LidarrUrl=http://127.0.0.1:8686
       - LidarrAPIkey=LIDARRAPI
+      - CountryCode=us
     restart: unless-stopped
 ```
 
