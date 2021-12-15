@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.36"
+	log "############################################ SCRIPT VERSION 1.1.37"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -998,7 +998,7 @@ VideoDownload () {
 
 	log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
 	log "=======================START YOUTUBE-DL========================="
-	youtube-dl ${cookies} -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mp4 --no-mtime --geo-bypass "$youtubeurl"
+	yt-dlp -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mp4 --no-mtime --geo-bypass "$youtubeurl"
 	log "========================STOP YOUTUBE-DL========================="
 	if [ -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mp4" ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
