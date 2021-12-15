@@ -24,9 +24,10 @@ RUN \
 	echo "************ install python packages ************" && \
 	python3 -m pip install --no-cache-dir -U \
 		youtube_dl \
+		yt-dlp \
 		mutagen \
-		tidal-dl \
 		yq
+		
 
 # copy local files
 COPY root/ /
