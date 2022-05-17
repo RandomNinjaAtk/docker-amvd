@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.40"
+	log "############################################ SCRIPT VERSION 1.1.41"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -698,7 +698,7 @@ VideoDownload () {
 		thumbnailname="$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}"
 	fi
 	
-	if [ -f "${filelocation}.mkv" ]; then
+	if [ -f "${filelocation}.mkv" ] || [ -f "${filelocation}.mp4" ] ; then
 		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} ::  ${videotitle}${nfovideodisambiguation} already downloaded!"
 		if cat "/config/logs/download.txt" | grep -i ":: $youtubeid ::" | read; then
 			sleep 0.1
