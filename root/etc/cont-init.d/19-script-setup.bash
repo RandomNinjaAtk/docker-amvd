@@ -3,13 +3,26 @@
 # create scripts directory if missing
 if [ ! -d "/config/scripts" ]; then
 	mkdir -p "/config/scripts"
-else
-	echo "Updating scripts..."
-	rm -rf /config/scripts/*
 fi
 
-if [ -d "/config/scripts" ]; then
-	cp /scripts/* /config/scripts/
+if [ "$updateScripts" = "true" ]; then
+	echo "Updating scripts..."
+	if [ -f /config/scripts/download-legacy.bash ]; then
+		rm /config/scripts/download-legacy.bash
+	fi
+	if [ -f /config/scripts/download.bash ]; then
+		rm /config/scripts/download.bash
+	fi
+	if [ -f /config/scripts/start.bash ]; then
+		rm /config/scripts/start.bash
+	fi
+	if [ -f /config/scripts/tag.py ]; then
+		rm /config/scripts/tag.py
+	fi
+	cp /scripts/download-legacy.bash /config/scripts/
+	cp /scripts/download.bash /config/scripts/
+	cp /scripts/start.bash /config/scripts/
+	cp /scripts/tag.py /config/scripts/
 fi
 
 # create cache directory if missing
