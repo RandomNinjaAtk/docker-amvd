@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.39"
+	log "############################################ SCRIPT VERSION 1.1.40"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -128,9 +128,6 @@ Configuration () {
 	# videoformat
 	if [ ! -z "$videoformat" ]; then
 		log "Music Video Format Set To: $videoformat"
-	else
-		log "Music Video Format Set To: --format bestvideo+bestaudio"
-		videoformat="--format bestvideo+bestaudio"
 	fi
 
 	# videofilter
@@ -160,10 +157,6 @@ Configuration () {
 			log "Music Video Use Folders: ENABLED"
 			if [ ! -z "$FolderPermissions" ]; then
 				log "Music Video Foldder Permissions: $FolderPermissions"
-			else
-				log "WARNING: FolderPermissions not set, using default..."
-				FolderPermissions="755"
-				log "Music Video Foldder Permissions: $FolderPermissions"
 			fi
 			if [ "$USEVIDEOFOLDERS" == "true" ]; then
 				log "Music Video Use Video Folders: ENABLED"
@@ -180,10 +173,6 @@ Configuration () {
 	fi
 
 	if [ ! -z "$FilePermissions" ]; then
-		log "Music Video File Permissions: $FilePermissions"
-	else
-		log "ERROR: FilePermissions not set, using default..."
-		FilePermissions="644"
 		log "Music Video File Permissions: $FilePermissions"
 	fi
 
