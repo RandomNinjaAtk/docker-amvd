@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.38"
+	log "############################################ SCRIPT VERSION 1.1.39"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -494,6 +494,7 @@ VideoNFOWriter () {
 			echo "</musicvideo>" >> "$nfo"
 			tidy -w 2000 -i -m -xml "$nfo" &>/dev/null
 			chmod $FilePermissions "$nfo"
+			chown abc:abc "$nfo"
 			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
 			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
 		fi
@@ -785,6 +786,8 @@ VideoDownload () {
 		rm "$destination/temp.mkv"
 		chmod $FilePermissions "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
 		chmod $FilePermissions "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+		chown abc:abc "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+		chown abc:abc "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
 		if [ "$USEVIDEOFOLDERS" == "true" ]; then
 			if [ ! -d "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}" ]; then
 				mkdir -p "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}"
