@@ -84,8 +84,8 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e WriteNFOs="false"` | true = enabled :: Create NFO and Local Thumbnail for use in applications such as Kodi |
 | `-e USEFOLDERS=false` | true = enabled :: Creates subfolders using the Lidarr Artist folder name |
 | `-e USEVIDEOFOLDERS=false` | true = enabled :: Creates subfolders using Video File Name only, requires USEFOLDERS to be enabled |
-| `-e FilePermissions=644` | Based on chmod linux permissions |
-| `-e FolderPermissions=755` | Based on chmod linux permissions |
+| `-e FilePermissions=666` | Optional :: Based on chmod linux permissions |
+| `-e FolderPermissions=777` | Optional :: Based on chmod linux permissions |
 
 ## Usage
 
@@ -109,8 +109,6 @@ docker create \
   -e videofilter=live \
   -e USEFOLDERS=false \
   -e USEVIDEOFOLDERS=false \
-  -e FilePermissions=644 \
-  -e FolderPermissions=755 \
   -e MBRAINZMIRROR=https://musicbrainz.org \
   -e MBRATELIMIT=1 \
   -e LidarrUrl=http://127.0.0.1:8686 \
@@ -146,8 +144,6 @@ services:
       - videofilter=live
       - USEFOLDERS=false
       - USEVIDEOFOLDERS=false
-      - FilePermissions=644
-      - FolderPermissions=755
       - MBRAINZMIRROR=https://musicbrainz.org
       - MBRATELIMIT=1
       - LidarrUrl=http://127.0.0.1:8686
