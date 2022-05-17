@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.42"
+	log "############################################ SCRIPT VERSION 1.1.43"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -198,17 +198,8 @@ CacheEngine () {
 		sanitizedartistname="$(basename "${artistnamepath}" | sed 's% (.*)$%%g')"
 		if  [ "$LidArtistNameCap" == "Various Artists" ]; then
 			log "$artistnumber of $artisttotal :: $LidArtistNameCap :: MBZDB CACHE :: Skipping, not processed by design..."
-			return 2
-		fi
-
-		if [ -f "/config/cache/$sanitizedartistname-$mbid-info.json" ]; then
-			mbrainzurlcount=$(curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/artist/$mbid?inc=url-rels&fmt=json" | jq -r ".relations | .[] | .url | .resource" | wc -l)
-			sleep $MBRATELIMIT
-			cachedurlcount=$(cat "/config/cache/$sanitizedartistname-$mbid-info.json" | jq -r ".relations | .[] | .url | .resource" | wc -l)
-			if [ "$mbrainzurlcount" -ne "$cachedurlcount" ]; then
-				rm "/config/cache/$sanitizedartistname-$mbid-info.json"
-			fi
-		fi
+			return
+		fi			
 
 		if [ ! -f "/config/cache/$sanitizedartistname-$mbid-info.json" ]; then
 			log "$artistnumber of $artisttotal :: $LidArtistNameCap :: MBZDB CACHE :: Caching Musicbrainz Artist Info..."
@@ -221,20 +212,35 @@ CacheEngine () {
 		imvdburl="echo $artistImvdbUrl"
 		if [ ! -z "$imvdburl" ]; then
 
+			
+
+			if [ -f "/config/cache/$sanitizedartistname-$mbid-imvdb.json" ]; then
+				cachedimvdbcount="$(cat "/config/cache/$sanitizedartistname-$mbid-imvdb.json" | jq -r '.[] | .id' | wc -l)"
+				if [ $cachedimvdbcount -ne 0 ]; then
+					if ! [[ $(find "/config/cache/$sanitizedartistname-$mbid-imvdb.json" -mtime +7 -print) ]]; then
+						log "$artistnumber of $artisttotal :: $artistname :: IMVDB CACHE :: Artist Cache Valid, skipping..."
+						imvdbarurllistcount=1
+						return
+					else
+						log "$artistnumber of $artisttotal :: $artistname :: IMVDB CACHE :: Artist Cache Expired :: Updating..."
+						rm  "/config/cache/$sanitizedartistname-$mbid-imvdb.json" 
+					fi
+				fi
+			else
+				cachedimvdbcount="0"
+			fi
+
+
 			imvdbslug="$(basename "$imvdburl")"
 			imvdbarurlfile="$(curl -s "https://imvdb.com/n/$imvdbslug")"
 			imvdbarurllist=($(echo "$imvdbarurlfile" | grep -Eoi '<a [^>]+>' |  grep -Eo 'href="[^\"]+"' | grep -Eo '(http|https)://[^"]+' |  grep -i ".com/video" | grep -i "$imvdbslug" | sort -u))
 			imvdbarurllistcount=$(echo "$imvdbarurlfile" | grep -Eoi '<a [^>]+>' |  grep -Eo 'href="[^\"]+"' | grep -Eo '(http|https)://[^"]+' |  grep -i ".com/video" | grep -i "$imvdbslug" | sort -u | wc -l)
 			if [ $imvdbarurllistcount = 0 ]; then
 				log "$artistnumber of $artisttotal :: $LidArtistNameCap :: IMVDB CACHE :: 0 Videos Found :: Skipping..."
-				return 2
+				return
 			fi
 
-			if [ -f "/config/cache/$sanitizedartistname-$mbid-imvdb.json" ]; then
-				cachedimvdbcount="$(cat "/config/cache/$sanitizedartistname-$mbid-imvdb.json" | jq -r '.[] | .id' | wc -l)"
-			else
-				cachedimvdbcount="0"
-			fi
+			
 
 			if [ $imvdbarurllistcount -ne $cachedimvdbcount ]; then
 				log "$artistnumber of $artisttotal :: $LidArtistNameCap :: IMVDB CACHE :: Cache out of date"
@@ -816,7 +822,9 @@ LidarrConnection () {
 		sanitizedartistname="$(basename "${artistnamepath}" | sed 's% (.*)$%%g')"
 		artistfolder="$(basename "${artistnamepath}")"
 		CacheEngine
-		DownloadVideos
+		if [ $imvdbarurllistcount -ne 0 ]; then
+			DownloadVideos
+		fi
 
 	done
 	totaldownloadcount=$(find "$LIBRARY" -mindepth 1 -maxdepth 3 -type f -iname "*.mkv" | wc -l)
