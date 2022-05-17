@@ -70,6 +70,7 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-v /config` | Configuration files for Lidarr. |
 | `-v /downloads-amvd` | Location of music videos, also add a volume to match the location |
 | `-v /ama` | Optional :: Map this to the AMA containers /config folder for proper usage |
+| `-e updateScripts="true"` | true = Enabled :: Updates scripts on startup :: Optional |
 | `-e AUTOSTART="true"` | true = Enabled :: Runs script automatically on startup |
 | `-e SCRIPTINTERVAL=1h` | #s or #m or #h or #d :: s = seconds, m = minutes, h = hours, d = days :: Amount of time between each script run, when AUTOSTART is enabled |
 | `-e LidarrUrl="http://127.0.0.1:8686"` | Set domain or IP to your Lidarr instance including port. If using reverse proxy, do not use a trailing slash. Ensure you specify http/s. |
