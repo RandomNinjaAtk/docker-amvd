@@ -3,8 +3,10 @@ LABEL maintainer="RandomNinjaAtk"
 
 ENV TITLE="Automated Music Video Downloader (AMVD)"
 ENV TITLESHORT="AMVD"
-ENV VERSION="1.0.7"
+ENV VERSION="1.0.8"
 ENV MBRAINZMIRROR="https://musicbrainz.org"
+ENV FilePermissions=666
+ENV FolderPermissions=777
 
 RUN \
 	echo "************ install dependencies ************" && \
