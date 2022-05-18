@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.46"
+	log "############################################ SCRIPT VERSION 1.1.47"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -202,11 +202,16 @@ CacheEngine () {
 			log "$artistnumber of $artisttotal :: $LidArtistNameCap :: MBZDB CACHE :: Musicbrainz Artist Info Cache Valid..."
 		fi
 	
-		imvdburl="echo $artistImvdbUrl"
+		imvdburl="$(echo $artistImvdbUrl)"
+		imvdbslug="$(basename "$imvdburl")"
+
+		if [ -z "$imvdbslug" ]; then
+			log "$artistnumber of $artisttotal :: $LidArtistNameCap :: IMVDB CACHE :: ERROR :: Aritst IMVDB URL not found in Lidarr :: Skipping..."
+			imvdbarurllistcount=0
+			return
+		fi
+
 		if [ ! -z "$imvdburl" ]; then
-
-			
-
 			if [ -f "/config/cache/$sanitizedartistname-$mbid-imvdb.json" ]; then
 				cachedimvdbcount="$(cat "/config/cache/$sanitizedartistname-$mbid-imvdb.json" | jq -r '.[] | .id' | wc -l)"
 				if [ $cachedimvdbcount -ne 0 ]; then
@@ -221,14 +226,6 @@ CacheEngine () {
 				fi
 			else
 				cachedimvdbcount="0"
-			fi
-
-
-			imvdbslug="$(basename "$imvdburl")"
-			if [ ! -z "$imvdbslug" ]; then
-				log "$artistnumber of $artisttotal :: $LidArtistNameCap :: IMVDB CACHE :: ERROR :: Aritst IMVDB URL not found in Lidarr :: Skipping..."
-				imvdbarurllistcount=0
-				return
 			fi
 
 			imvdbarurlfile="$(curl -s "https://imvdb.com/n/$imvdbslug")"
