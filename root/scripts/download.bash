@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.51"
+	log "############################################ SCRIPT VERSION 1.1.52"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -221,7 +221,18 @@ CacheEngine () {
 		imvdbslug="$(basename "$imvdburl")"
 
 		if [ -z "$imvdbslug" ]; then
-			log "$artistnumber of $artisttotal :: $LidArtistNameCap :: IMVDB CACHE :: ERROR :: Aritst IMVDB URL not found in Lidarr :: Skipping..."
+			if ! [ -f "/config/logs/imvdberror.log" ]; then
+				touch "/config/logs/imvdberror.log"
+			fi
+			if [ -f "/config/logs/imvdberror.log" ]; then
+				log "$artistnumber of $artisttotal :: $artistname :: MBZDB :: ERROR :: musicbrainz id: $mbid is missing IMVDB link, see: \"/config/logs/imvdberror.log\" for more detail..."
+				if cat "/config/logs/imvdberror.log" | grep "$mbid" | read; then
+					sleep 0.1
+				else
+					log "Update Musicbrainz Relationship Page: https://musicbrainz.org/artist/$mbid/relationships for \"${artistname}\" with IMVDB Artist Link" >> "/config/logs/imvdberror.log"
+				fi
+			fi
+
 			imvdbarurllistcount=0
 			return
 		fi
@@ -384,18 +395,7 @@ DownloadVideos () {
 				fi
 			fi
 			done
-	else
-		if ! [ -f "/config/logs/imvdberror.log" ]; then
-			touch "/config/logs/imvdberror.log"
-		fi
-		if [ -f "/config/logs/imvdberror.log" ]; then
-			log "$artistnumber of $artisttotal :: $artistname :: MBZDB :: ERROR :: musicbrainz id: $mbid is missing IMVDB link, see: \"/config/logs/imvdberror.log\" for more detail..."
-			if cat "/config/logs/imvdberror.log" | grep "$mbid" | read; then
-				sleep 0.1
-			else
-				log "Update Musicbrainz Relationship Page: https://musicbrainz.org/artist/$mbid/relationships for \"${artistname}\" with IMVDB Artist Link" >> "/config/logs/imvdberror.log"
-			fi
-		fi
+			
 	fi
 
 	if [ "$USEFOLDERS" == "true" ]; then
@@ -414,7 +414,7 @@ DownloadVideos () {
 }
 
 VideoNFOWriter () {
-
+	log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
 	if [ -f "${filelocation}.mkv" ]; then
 		if [ ! -f "${filelocation}.nfo" ]; then
 			nfo="${filelocation}.nfo"
@@ -489,8 +489,7 @@ VideoNFOWriter () {
 			tidy -w 2000 -i -m -xml "$nfo" &>/dev/null
 			chmod $FilePermissions "$nfo"
 			chown abc:abc "$nfo"
-			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
-			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
+			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: NFO WRITER :: Done"
 		fi
 	fi
 
