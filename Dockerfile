@@ -7,7 +7,7 @@ ENV VERSION="1.0.10"
 ENV MBRAINZMIRROR="https://musicbrainz.org"
 ENV FilePermissions=666
 ENV FolderPermissions=777
-ENV videoformat="--format bestvideo+bestaudio"
+ENV videoformat="-f bv+ba/b"
 ENV updateScripts="true"
 
 RUN \
