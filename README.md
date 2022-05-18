@@ -26,22 +26,20 @@
   * Embed subtitles if available matching desired language
   * Writes metadata into Kodi/Jellyfin/Emby compliant NFO file
     * Tagged Data includes
-      * Matched Title (MusicBrainz), fallback to IMVDb or Record Title (MusicBrainz)
-      * Matched Year (MusicBrainz)
-      * Matched Artist (MusicBrainz)
+      * Title (IMVDb)
+      * Year (IMVDb)
+      * Matched Artist (Lidarr)
       * Thumbnail Image
-      * Matched Release Genre Tags (MusicBrainz), fallback to Artist Genere Tags (MusicBrainz)
+      * Artist Genere Tags (MusicBrainz)
       * Director (If available from IMVDb)      
-      * Matched Album (MusicBrainz), fallback to YouTube (If available)
   * Embeds metadata into Music Video file
     * Tagged Data includes
-      * Matched Title (MusicBrainz), fallback to IMVDb or Record Title (MusicBrainz)
-      * Matched Year (MusicBrainz)
-      * Matched Artist (MusicBrainz)
-      * Matched Album Artist (MusicBrainz)
+      * Title (IMVDb)
+      * Year (IMVDb)
+      * Matched Artist (Lidarr)
+      * Matched Album Artist (Lidarr)
       * Thumbnail Image
-      * Matched Release Genre Tags (MusicBrainz), fallback to Artist Genere Tags (MusicBrainz)
-      * Matched Album (MusicBrainz), fallback to YouTube (If available)
+      * Artist Genere Tags (Lidarr)
 
 
 ## Supported Architectures
@@ -80,7 +78,6 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e SOURCE_CONNECTION=lidarr` | lidarr or ama :: ama requires the AMA config folder to be mounted as a volume: /ama |
 | `-e CountryCode=us` | Set the country code for preferred video matching, uses Musicbrainz Country Codes, lowercase only. |
 | `-e subtitlelanguage="en"` | Desired Language Code :: For guidence, please see youtube-dl documentation. |
-| `-e videofilter="live"` | This will exclude videos Matching MusicBrainz secondary release type and album disambiguation (single word only) |
 | `-e WriteNFOs="false"` | true = enabled :: Create NFO and Local Thumbnail for use in applications such as Kodi |
 | `-e USEFOLDERS=false` | true = enabled :: Creates subfolders using the Lidarr Artist folder name |
 | `-e USEVIDEOFOLDERS=false` | true = enabled :: Creates subfolders using Video File Name only, requires USEFOLDERS to be enabled |
