@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.44"
+	log "############################################ SCRIPT VERSION 1.1.45"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -303,7 +303,6 @@ DownloadVideos () {
 	fi
 
 	log "$artistnumber of $artisttotal :: $artistname :: Processing"
-	log "$artistnumber of $artisttotal :: $artistname :: Normalizing MBZDB Release Info (Capitalization)"
 	imvdburl="$(echo "$mbzartistinfo" | jq -r ".relations[] | .url | select(.resource | contains(\"imvdb\")) | .resource")"
 	imvdbslug="$(basename "$imvdburl")"
 
