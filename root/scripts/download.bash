@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.52"
+	log "############################################ SCRIPT VERSION 1.1.53"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -284,7 +284,7 @@ CacheEngine () {
 					url="${imvdbarurllist[$id]}"
 					imvdbvideoid=$(curl -s "$url" | grep -Eoi '<img [^>]+>' |  grep -Eo 'src="[^\"]+"' | grep -Eo '(http|https)://[^"]+' | grep "/video/" | grep -o '[[:digit:]]*' | grep -o -w '\w\{6,20\}' | head -n1)
 					log "$artistnumber of $artisttotal :: $LidArtistNameCap :: IMVDB CACHE :: Downloading Release $urlnumber Info"
-					curl -s "https://imvdb.com/api/v1/video/$imvdbvideoid?include=sources" -o "/config/temp/$mbid-imvdb-$urlnumber.json"
+					curl -s "https://imvdb.com/api/v1/video/$imvdbvideoid?include=sources,countries,featured,credits,bts,popularity" -o "/config/temp/$mbid-imvdb-$urlnumber.json"
 					sleep 0.1
 				done
 				if [ ! -f "/config/cache/$sanitizedartistname-$mbid-imvdb.json" ]; then
@@ -473,6 +473,12 @@ VideoNFOWriter () {
 			fi
 			echo "	<studio/>" >> "$nfo"
 			echo "	<artist>$artistname</artist>" >> "$nfo"
+			if [ ! -z "$videoFeaturedArtists" ]; then
+				for fartist in ${!videoFeaturedArtists[@]}; do
+					featartist="${videoFeaturedArtists[$fartist]}"
+					echo "	<artist>$featartist</artist>" >> "$nfo"
+				done
+			fi 
 			echo "	<musicBrainzArtistID>$mbid</musicBrainzArtistID>" >> "$nfo"
 			artistcountry="$(cat "/config/cache/$sanitizedartistname-$mbid-info.json" | jq -r ".country")"
 			if [ ! -z "$artistcountry" ]; then
@@ -485,14 +491,40 @@ VideoNFOWriter () {
 			else
 				echo "	<thumb/>" >> "$nfo"
 			fi
+			
+			videoContributersData=$(echo "$imvdbvideodata" | jq -r ".credits.crew[]")
+			videoContributersids=($(echo "$imvdbvideodata" | jq -r ".credits.crew[].entity_id"))
+			if [ ! -z "$videoContributersids" ]; then
+				for id in ${!videoContributersids[@]}; do
+					videoContributersid="${videoContributersids[$id]}"
+					VideoContributerName="$(echo $videoContributersData | jq -r "select(.entity_id==$videoContributersid) |.entity_name")"
+					VideoContributerRole="$(echo $videoContributersData | jq -r "select(.entity_id==$videoContributersid) |.position_name")"
+					VideoContributerPositionId="$(echo $videoContributersData | jq -r "select(.entity_id==$videoContributersid) |.position_id")"
+					VideoContributerPositionCode="$(echo $videoContributersData | jq -r "select(.entity_id==$videoContributersid) |.position_code")"
+					if echo "$VideoContributerPositionCode" | grep "label" | read; then
+						echo "	<studio>$VideoContributerName</studio>" >> "$nfo"
+						continue
+					fi
+					if echo "$VideoContributerPositionCode" | grep "dir" | read; then
+						continue
+					fi
+					echo "	<actor>" >> "$nfo"
+					echo "		<name>$VideoContributerName</name>" >> "$nfo"
+					echo "		<role>$VideoContributerRole</role>" >> "$nfo"
+					echo "		<order>$VideoContributerPositionId</order>" >> "$nfo"
+					echo "		<thumb/>" >> "$nfo"
+					echo "	</actor>" >> "$nfo"
+				done
+			fi
+			
 			echo "</musicvideo>" >> "$nfo"
 			tidy -w 2000 -i -m -xml "$nfo" &>/dev/null
 			chmod $FilePermissions "$nfo"
 			chown abc:abc "$nfo"
 			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: NFO WRITER :: Done"
+
 		fi
 	fi
-
 }
 
 VideoDownload () {
@@ -539,6 +571,24 @@ VideoDownload () {
 		genre="${genre,,}"
 		
 	fi
+
+	videoFeaturedArtists="$(echo "$imvdbvideodata" | jq -r ".featured_artists[].name")"
+	if [ ! -z "$videoFeaturedArtists" ]; then
+		OUT=""
+		OLDIFS="$IFS"
+		IFS=$'\n'
+		videoFeaturedArtists=($(echo "$imvdbvideodata" | jq -r ".featured_artists[].name"))
+		IFS="$OLDIFS"
+		for fartist in ${!videoFeaturedArtists[@]}; do
+			featartist="${videoFeaturedArtists[$fartist]}"
+			OUT=$OUT"$featartist / "
+		done
+		feata="${OUT%???}"
+		feata=" / ${feata}"
+	else
+		feata=""
+	fi
+
 	if [ "$trackmatch" = "true" ]; then
 		track="$videotrackposition"
 	else
@@ -639,7 +689,7 @@ VideoDownload () {
 			-metadata YEAR="$year" \
 			-metadata GENRE="$genre" \
 			-metadata ALBUM="Music Videos" \
-			-metadata ARTIST="$artistname" \
+			-metadata ARTIST="${artistname}${feata}" \
 			-metadata ALBUMARTIST="$artistname" \
 			-metadata:s:v:0 title="$qualitydescription" \
 			-metadata:s:a:0 title="$audiodescription" \
