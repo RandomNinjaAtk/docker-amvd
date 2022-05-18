@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.49"
+	log "############################################ SCRIPT VERSION 1.1.50"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -192,7 +192,18 @@ CacheEngine () {
 		if  [ "$LidArtistNameCap" == "Various Artists" ]; then
 			log "$artistnumber of $artisttotal :: $LidArtistNameCap :: MBZDB CACHE :: Skipping, not processed by design..."
 			return
-		fi			
+		fi
+
+		if [ -z "$artistImvdbUrl" ]; then
+			if [ -f "/config/cache/$sanitizedartistname-$mbid-info.json" ]; then
+				mbrainzurlcount=$(curl -s -A "$agent" "${MBRAINZMIRROR}/ws/2/artist/$mbid?inc=url-rels&fmt=json" | jq -r ".relations | .[] | .url | .resource" | wc -l)
+				sleep $MBRATELIMIT
+				cachedurlcount=$(cat "/config/cache/$sanitizedartistname-$mbid-info.json" | jq -r ".relations | .[] | .url | .resource" | wc -l)
+				if [ "$mbrainzurlcount" -ne "$cachedurlcount" ]; then
+					rm "/config/cache/$sanitizedartistname-$mbid-info.json"
+				fi
+			fi
+		fi
 
 		if [ ! -f "/config/cache/$sanitizedartistname-$mbid-info.json" ]; then
 			log "$artistnumber of $artisttotal :: $LidArtistNameCap :: MBZDB CACHE :: Caching Musicbrainz Artist Info..."
@@ -201,7 +212,11 @@ CacheEngine () {
 		else
 			log "$artistnumber of $artisttotal :: $LidArtistNameCap :: MBZDB CACHE :: Musicbrainz Artist Info Cache Valid..."
 		fi
-	
+
+		if [ -z "$artistImvdbUrl" ]; then
+			mbzartistinfo="$(cat "/config/cache/$sanitizedartistname-$mbid-info.json")"
+			artistImvdbUrl="$(echo "$mbzartistinfo" | jq -r ".relations | .[] | .url | select(.resource | contains(\"imvdb\")) | .resource")"
+		fi
 		imvdburl="$(echo $artistImvdbUrl)"
 		imvdbslug="$(basename "$imvdburl")"
 
@@ -383,13 +398,18 @@ DownloadVideos () {
 		fi
 	fi
 
-	
-			
+	if [ "$USEFOLDERS" == "true" ]; then
+		destination="$LIBRARY/$artistfolder"
+	else
+		destination="$LIBRARY"
+	fi		
 	
 	downloadcount=$(find "$destination" -mindepth 1 -maxdepth 3 -type f -iname "*.mkv" | wc -l)
 	log "$artistnumber of $artisttotal :: $artistname :: $downloadcount Videos Downloaded!"
-	log "$artistnumber of $artisttotal :: $artistname :: MARKING ARTIST AS COMPLETE"
-	touch "/config/cache/$sanitizedartistname-$mbid-download-complete"
+	if [ $downloadcount -ge 1 ]; then
+		log "$artistnumber of $artisttotal :: $artistname :: MARKING ARTIST AS COMPLETE"
+		touch "/config/cache/$sanitizedartistname-$mbid-download-complete"
+	fi
 
 }
 
