@@ -3,7 +3,7 @@ LABEL maintainer="RandomNinjaAtk"
 
 ENV TITLE="Automated Music Video Downloader (AMVD)"
 ENV TITLESHORT="AMVD"
-ENV VERSION="1.0.10"
+ENV VERSION="1.0.11"
 ENV MBRAINZMIRROR="https://musicbrainz.org"
 ENV FilePermissions=666
 ENV FolderPermissions=777
@@ -27,7 +27,6 @@ RUN \
 		/var/tmp/* && \
 	echo "************ install python packages ************" && \
 	python3 -m pip install --no-cache-dir -U \
-		youtube_dl \
 		yt-dlp \
 		mutagen \
 		yq
