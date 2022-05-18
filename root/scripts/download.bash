@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.43"
+	log "############################################ SCRIPT VERSION 1.1.44"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -116,13 +116,6 @@ Configuration () {
 	else
 		log "ERROR: CountryCode is empty, please configure wtih a valid Country Code (lowercase)"
 		error=1
-	fi
-
-	# RequireVideoMatch
-	if [ "$RequireVideoMatch" = "true" ]; then
-		log "Music Video Require Match: ENABLED"
-	else
-		log "Music Video Require Match: DISABLED"
 	fi
 
 	# videoformat
@@ -358,8 +351,6 @@ DownloadVideos () {
 			sanitizedvideodisambiguation=""
 			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ${videotitle}${nfovideodisambiguation} :: Checking for match"
 
-			VideoMatch
-
 			if [ "$trackmatch" = "false" ]; then
 				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Could not be matched to Musicbrainz"
 				if [ "$RequireVideoMatch" = "true" ]; then
@@ -412,17 +403,9 @@ VideoNFOWriter () {
 			nfo="${filelocation}.nfo"
 			echo "<musicvideo>" >> "$nfo"
 			echo "	<title>${videotitle}${nfovideodisambiguation}</title>" >> "$nfo"
-			echo "	<userrating>$youtubeaveragerating</userrating>" >> "$nfo"
-			if [ "$trackmatch" = "true" ]; then
-				echo "	<track>$videotrackposition</track>" >> "$nfo"
-			else
-				echo "	<track/>" >> "$nfo"
-			fi
-			if [ "$videoalbum" != "null" ]; then
-				echo "	<album>$videoalbum</album>" >> "$nfo"
-			else
-				echo "	<album>Music Videos</album>" >> "$nfo"
-			fi
+			echo "	<userrating/>" >> "$nfo"
+			echo "	<track/>" >> "$nfo"
+			echo "	<album>Music Videos</album>" >> "$nfo"
 			echo "	<plot/>" >> "$nfo"
 			if [ ! -z "$imvdbid" ]; then
 				echo "	<imvdbid>$imvdbid</imvdbid>" >> "$nfo"
@@ -494,143 +477,6 @@ VideoNFOWriter () {
 		fi
 	fi
 
-}
-
-VideoMatch () {
-
-	trackmatch="false"
-	filter="false"
-	skip="false"
-	releaseid=""
-	videotitlelowercase="$(echo $videotitlelowercase | sed 's/"/\\"/g')"
-	# album match first...
-	# Preferred Country
-	if [ -z "$releaseid" ]; then
-		releaseid=($(echo "$releasesfilelowercase" | jq -s -r ".[] | .[] | .releases | sort_by(.date) | .[] | select(.date!=\"\" and .country==\"$CountryCodelowercase\" and .status==\"official\") | select(.\"release-group\".\"primary-type\"==\"album\") | select(.media[] | .tracks[] | .title==\"$videotitlelowercase\") | .id"))
-	fi
-
-	# WorldWide
-	if [ -z "$releaseid" ]; then
-		releaseid=($(echo "$releasesfilelowercase" | jq -s -r ".[] | .[] | .releases | sort_by(.date) | .[] | select(.date!=\"\" and .country==\"xw\" and .status==\"official\") | select(.\"release-group\".\"primary-type\"==\"album\") | select(.media[] | .tracks[] | .title==\"$videotitlelowercase\") | .id"))
-	fi
-
-	# Everywhere
-	if [ -z "$releaseid" ]; then
-		releaseid=($(echo "$releasesfilelowercase" | jq -s -r ".[] | .[] | .releases | sort_by(.date) | .[] | select(.date!=\"\" and .status==\"official\") | select(.\"release-group\".\"primary-type\"==\"album\") | select(.media[] | .tracks[] | .title==\"$videotitlelowercase\") | .id"))
-	fi
-
-	# single match second...
-	# Preferred Country
-	if [ -z "$releaseid" ]; then
-		releaseid=($(echo "$releasesfilelowercase" | jq -s -r ".[] | .[] | .releases | sort_by(.date) | .[] | select(.date!=\"\" and .country==\"$CountryCodelowercase\" and .status==\"official\") | select(.\"release-group\".\"primary-type\"==\"single\") | select(.media[] | .tracks[] | .title==\"$videotitlelowercase\") | .id"))
-	fi
-
-	# WorldWide
-	if [ -z "$releaseid" ]; then
-		releaseid=($(echo "$releasesfilelowercase" | jq -s -r ".[] | .[] | .releases | sort_by(.date) | .[] | select(.date!=\"\" and .country==\"xw\" and .status==\"official\") | select(.\"release-group\".\"primary-type\"==\"single\") | select(.media[] | .tracks[] | .title==\"$videotitlelowercase\") | .id"))
-	fi
-
-	# Everywhere
-	if [ -z "$releaseid" ]; then
-		releaseid=($(echo "$releasesfilelowercase" | jq -s -r ".[] | .[] | .releases | sort_by(.date) | .[] | select(.date!=\"\" and .status==\"official\") | select(.\"release-group\".\"primary-type\"==\"single\") | select(.media[] | .tracks[] | .title==\"$videotitlelowercase\") | .id"))
-	fi
-
-	# ep match third...
-	# Preferred Country
-	if [ -z "$releaseid" ]; then
-		releaseid=($(echo "$releasesfilelowercase" | jq -s -r ".[] | .[] | .releases | sort_by(.date) | .[] | select(.date!=\"\" and .country==\"$CountryCodelowercase\" and .status==\"official\") | select(.\"release-group\".\"primary-type\"==\"ep\") | select(.media[] | .tracks[] | .title==\"$videotitlelowercase\") | .id"))
-	fi
-
-	# WorldWide
-	if [ -z "$releaseid" ]; then
-		releaseid=($(echo "$releasesfilelowercase" | jq -s -r ".[] | .[] | .releases | sort_by(.date) | .[] | select(.date!=\"\" and .country==\"xw\" and .status==\"official\") | select(.\"release-group\".\"primary-type\"==\"ep\") | select(.media[] | .tracks[] | .title==\"$videotitlelowercase\") | .id"))
-	fi
-
-	# Everywhere
-	if [ -z "$releaseid" ]; then
-		releaseid=($(echo "$releasesfilelowercase" | jq -s -r ".[] | .[] | .releases | sort_by(.date) | .[] | select(.date!=\"\" and .status==\"official\") | select(.\"release-group\".\"primary-type\"==\"ep\") | select(.media[] | .tracks[] | .title==\"$videotitlelowercase\") | .id"))
-	fi
-
-	# match any type fourth...
-	# Preferred Country
-	if [ -z "$releaseid" ]; then
-		releaseid=($(echo "$releasesfilelowercase" | jq -s -r ".[] | .[] | .releases | sort_by(.date) | .[] | select(.date!=\"\" and .country==\"$CountryCodelowercase\" and .status==\"official\") | select(.media[] | .tracks[] | .title==\"$videotitlelowercase\") | .id"))
-	fi
-
-	# WorldWide
-	if [ -z "$releaseid" ]; then
-		releaseid=($(echo "$releasesfilelowercase" | jq -s -r ".[] | .[] | .releases | sort_by(.date) | .[] | select(.date!=\"\" and .country==\"xw\" and .status==\"official\") | select(.media[] | .tracks[] | .title==\"$videotitlelowercase\") | .id"))
-	fi
-
-	# Everywhere
-	if [ -z "$releaseid" ]; then
-		releaseid=($(echo "$releasesfilelowercase" | jq -s -r ".[] | .[] | .releases | sort_by(.date) | .[] | select(.date!=\"\" and .status==\"official\" ) | select(.media[] | .tracks[] | .title==\"$videotitlelowercase\") | .id"))
-	fi
-
-	# Loop through matched track releaseid's to find a corresponding release-group match
-	if [ ! -z "$releaseid" ]; then
-		for id in ${!releaseid[@]}; do
-			subprocess=$(( $id + 1 ))
-			trackreleaseid="${releaseid[$id]}"
-			releasedata="$(echo "$releasesfile" | jq -r ".[] | .releases[] | select(.id==\"$trackreleaseid\")")"
-			releasedatalowercase="$(echo ${releasedata,,})"
-			releasetrackid="$(echo "$releasedatalowercase" | jq -r ".media[] | .tracks[] | select(.title==\"$videotitlelowercase\") | .id" | head -n 1)"
-			releasetracktitle="$(echo "$releasedata" | jq -r ".media[] | .tracks[] | select(.id==\"$releasetrackid\") | .title" | head -n 1)"
-			releasetrackposition="$(echo "$releasedata" | jq -r ".media[] | .tracks[] | select(.id==\"$releasetrackid\") | .position")"
-			releasetitle="$(echo "$releasedata" | jq -r ".title")"
-			releasestatus="$(echo "$releasedata" | jq -r ".status")"
-			releasecountry="$(echo "$releasedata" | jq -r ".country")"
-			releaselanguage="$(echo "$releasedata" | jq -r '."text-representation".language')"
-			releasegrouptitle="$(echo "$releasedata" | jq -r '."release-group"."title"')"
-			releasegroupdate="$(echo "$releasedata" | jq -r '."release-group"."first-release-date"')"
-			releasegroupyear="$(echo ${releasegroupdate:0:4})"
-			releasegroupstatus="$(echo "$releasedata" | jq -r '."release-group" | ."primary-type"')"
-			releasegroupsecondarytype="$(echo "$releasedata" | jq -r '."release-group" | ."secondary-types"[]')"
-			releasegroupgenres="$(echo "$releasedata" | jq -r '."release-group" | .genres[] | .name' | sort -u)"
-			# Skip null country
-			if [ "$releasecountry" = null ]; then
-				skip=true
-			fi
-
-			if [ ! -z "$videofilter" ]; then
-				# Skip filter album matches
-				if echo "$releasegroupsecondarytype" | grep -i "$videofilter" | read; then
-					skip=true
-					filter=true
-				fi
-
-				# Skip filter album matches
-				if [ ! -z "$videodisambiguation" ]; then
-					if echo "$videodisambiguation" | grep -i "$videofilter" | read; then
-						skip=true
-						filter=true
-					fi
-				fi
-			fi
-
-			# Use artist genres, if release group genres don't exist
-			if [ -z "$releasegroupgenres" ]; then
-				releasegroupgenres="$(echo "$mbzartistinfo" | jq -r '.genres[] | .name' | sort -u | sed -e "s/\b\(.\)/\u\1/g")"
-			fi
-
-			if [ "$skip" = false ]; then
-				trackmatch=true
-				filter=false
-				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: Track $releasetrackposition :: $releasetracktitle :: $releasegrouptitle :: $releasestatus :: $releasecountry :: $releasegroupstatus :: $releasegroupyear"
-				videotrackposition="$releasetrackposition"
-				videotitle="$releasetracktitle"
-				sanitizevideotitle="$(echo "$videotitle" | sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g")"
-				videoyear="$releasegroupyear"
-				videoalbum="$releasegrouptitle"
-				videogenres="$(echo "$releasegroupgenres" | sed -e "s/\b\(.\)/\u\1/g")"
-				break
-			else
-				trackmatch=false
-				skip=false
-				continue
-			fi
-		done
-	fi
 }
 
 VideoDownload () {
@@ -771,6 +617,14 @@ VideoDownload () {
 			-map 0 \
 			-c copy \
 			-metadata ENCODED_BY="AMVD" \
+			-metadata TITLE="${videotitle}${nfovideodisambiguation} " \
+			-metadata DATE_RELEASE="$year" \
+			-metadata DATE="$year" \
+			-metadata YEAR="$year" \
+			-metadata GENRE="$genre" \
+			-metadata ALBUM="Music Videos" \
+			-metadata ARTIST="$artistname" \
+			-metadata ALBUMARTIST="$artistname" \
 			-metadata:s:v:0 title="$qualitydescription" \
 			-metadata:s:a:0 title="$audiodescription" \
 			"$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
