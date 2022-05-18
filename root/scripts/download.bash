@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.47"
+	log "############################################ SCRIPT VERSION 1.1.48"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -340,10 +340,13 @@ DownloadVideos () {
 				continue
 			fi
 
-			youtubedata="$(python3 /usr/local/bin/youtube-dl ${cookies} -j $youtubeurl 2> /dev/null)"
+			youtubedata="$(yt-dlp ${cookies} -j "$youtubeurl" 2> /dev/null)"
+		
 			if [ -z "$youtubedata" ]; then
+				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: ERROR :: Video Unavailable ($youtubeurl)"
 				continue
 			fi
+		
 			youtubeuploaddate="$(echo "$youtubedata" | jq -r '.upload_date')"
 			if [ "$imvdbvideoyear" = "null" ]; then
 				videoyear="$(echo ${youtubeuploaddate:0:4})"
@@ -351,15 +354,7 @@ DownloadVideos () {
 			youtubeaveragerating="$(echo "$youtubedata" | jq -r '.average_rating')"
 			videoalbum="$(echo "$youtubedata" | jq -r '.album')"
 			sanitizedvideodisambiguation=""
-			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ${videotitle}${nfovideodisambiguation} :: Checking for match"
-
-			if [ "$trackmatch" = "false" ]; then
-				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Could not be matched to Musicbrainz"
-				if [ "$RequireVideoMatch" = "true" ]; then
-					log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: MBZDB MATCH :: ERROR :: ${videotitle}${nfovideodisambiguation} :: Require Match Enabled, skipping..."
-					continue
-				fi
-			fi
+			
 
 			VideoDownload
 
@@ -562,9 +557,9 @@ VideoDownload () {
 	fi
 
 
-	log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
+	log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with yt-dlp"
 	log "=======================START YOUTUBE-DL========================="
-	yt-dlp -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --embed-subs --sub-lang $subtitlelanguage --sub-format srt --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
+	yt-dlp -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --embed-subs --sub-lang $subtitlelanguage --sub-format best --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
 	log "========================STOP YOUTUBE-DL========================="
 	if [ -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
