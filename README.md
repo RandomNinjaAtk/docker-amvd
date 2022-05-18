@@ -79,7 +79,6 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e MBRATELIMIT=1` | OPTIONAL: musicbrainz rate limit, musicbrainz allows only 1 connection per second, max setting is 10 |
 | `-e SOURCE_CONNECTION=lidarr` | lidarr or ama :: ama requires the AMA config folder to be mounted as a volume: /ama |
 | `-e CountryCode=us` | Set the country code for preferred video matching, uses Musicbrainz Country Codes, lowercase only. |
-| `-e RequireVideoMatch=true` | true = enabled :: Only keep videos that could be matched to a Musicbrainz music track. |
 | `-e subtitlelanguage="en"` | Desired Language Code :: For guidence, please see youtube-dl documentation. |
 | `-e videofilter="live"` | This will exclude videos Matching MusicBrainz secondary release type and album disambiguation (single word only) |
 | `-e WriteNFOs="false"` | true = enabled :: Create NFO and Local Thumbnail for use in applications such as Kodi |
@@ -105,7 +104,6 @@ docker create \
   -e AUTOSTART=true \
   -e SCRIPTINTERVAL=1h \
   -e SOURCE_CONNECTION=lidarr \
-  -e RequireVideoMatch=true \
   -e subtitlelanguage=en \
   -e videofilter=live \
   -e USEFOLDERS=false \
@@ -140,7 +138,6 @@ services:
       - AUTOSTART=true
       - SCRIPTINTERVAL=1h
       - SOURCE_CONNECTION=lidarr
-      - RequireVideoMatch=true
       - subtitlelanguage=en
       - videofilter=live
       - USEFOLDERS=false
@@ -166,7 +163,7 @@ services:
   * Contains the log output from the script
 * <strong>/config/cache</strong>
   * Contains the artist data cache to speed up processes
-* <strong>/config/coookies</strong>
+* <strong>/config/cookies</strong>
   * Store your cookies.txt file in this location, may be required for youtube-dl to work properly
   
   
@@ -179,7 +176,7 @@ services:
 
 # Credits
 - [ffmpeg](https://ffmpeg.org/)
-- [youtube-dl](https://ytdl-org.github.io/youtube-dl/index.html)
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [Lidarr](https://lidarr.audio/)
 - [Musicbrainz](https://musicbrainz.org/)
 - Icons made by <a href="http://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
