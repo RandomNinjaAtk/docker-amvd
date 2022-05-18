@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.45"
+	log "############################################ SCRIPT VERSION 1.1.46"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -225,6 +225,12 @@ CacheEngine () {
 
 
 			imvdbslug="$(basename "$imvdburl")"
+			if [ ! -z "$imvdbslug" ]; then
+				log "$artistnumber of $artisttotal :: $LidArtistNameCap :: IMVDB CACHE :: ERROR :: Aritst IMVDB URL not found in Lidarr :: Skipping..."
+				imvdbarurllistcount=0
+				return
+			fi
+
 			imvdbarurlfile="$(curl -s "https://imvdb.com/n/$imvdbslug")"
 			imvdbarurllist=($(echo "$imvdbarurlfile" | grep -Eoi '<a [^>]+>' |  grep -Eo 'href="[^\"]+"' | grep -Eo '(http|https)://[^"]+' |  grep -i ".com/video" | grep -i "$imvdbslug" | sort -u))
 			imvdbarurllistcount=$(echo "$imvdbarurlfile" | grep -Eoi '<a [^>]+>' |  grep -Eo 'href="[^\"]+"' | grep -Eo '(http|https)://[^"]+' |  grep -i ".com/video" | grep -i "$imvdbslug" | sort -u | wc -l)
@@ -561,7 +567,7 @@ VideoDownload () {
 
 	log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with youtube-dl"
 	log "=======================START YOUTUBE-DL========================="
-	yt-dlp -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --write-sub --sub-lang $subtitlelanguage --embed-subs --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
+	yt-dlp -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --embed-subs --sub-lang $subtitlelanguage --sub-format srt --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
 	log "========================STOP YOUTUBE-DL========================="
 	if [ -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
