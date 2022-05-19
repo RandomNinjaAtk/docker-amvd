@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.53"
+	log "############################################ SCRIPT VERSION 1.1.54"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -625,10 +625,9 @@ VideoDownload () {
 		return
 	fi
 
-
 	log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with yt-dlp"
 	log "=======================START YT-DLP========================="
-	yt-dlp -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" ${videoformat} --embed-subs --sub-lang $subtitlelanguage --merge-output-format mkv --no-mtime --geo-bypass "$youtubeurl"
+	yt-dlp -f "$videoformat" -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" --embed-subs --sub-lang $subtitlelanguage --merge-output-format mkv --remux-video mkv --no-mtime --geo-bypass "$youtubeurl"
 	log "========================STOP YT-DLP========================="
 	if [ -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
