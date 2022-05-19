@@ -3,11 +3,11 @@ LABEL maintainer="RandomNinjaAtk"
 
 ENV TITLE="Automated Music Video Downloader (AMVD)"
 ENV TITLESHORT="AMVD"
-ENV VERSION="1.0.11"
+ENV VERSION="1.0.12"
 ENV MBRAINZMIRROR="https://musicbrainz.org"
 ENV FilePermissions=666
 ENV FolderPermissions=777
-ENV videoformat="-f bv+ba/b"
+ENV videoformat="bv+ba/b"
 ENV updateScripts="true"
 
 RUN \
