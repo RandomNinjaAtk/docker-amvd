@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.56"
+	log "############################################ SCRIPT VERSION 1.1.57"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -351,8 +351,7 @@ DownloadVideos () {
 			videodirectors="$(echo "$imvdbvideodata" | jq -r ".directors[] | .entity_name")"
 			videoimage="$(echo "$imvdbvideodata" | jq -r ".image.o")"
 			videoyear="$(echo "$imvdbvideodata" | jq -r ".year")"
-			sanitizevideotitle="$(echo "$videotitle"  |  sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g")"
-			sanitizevideotitle="${sanitizevideotitle%% }"
+			sanitizevideotitle="$(echo "$videotitle" | sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g" | sed 's/^[.]*//' | sed  's/[.]*$//g' | sed  's/^ *//g' | sed 's/ *$//g')"
 			youtubeid="$(echo "$imvdbvideodata" | jq -r ".sources[] | select(.source==\"youtube\") | .source_data" | head -n 1)"
 			youtubeurl="https://www.youtube.com/watch?v=$youtubeid"
 			if ! [ -f "/config/logs/download.txt" ]; then
@@ -531,9 +530,7 @@ VideoNFOWriter () {
 VideoDownload () {
 	if [ ! -z "$videodisambiguation" ]; then
 		nfovideodisambiguation=" ($videodisambiguation)"
-		nfovideodisambiguation="${nfovideodisambiguation%% }"
-		sanitizedvideodisambiguation=" ($(echo "${videodisambiguation}" | sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g"))"
-		sanitizedvideodisambiguation="${sanitizedvideodisambiguation%% }"
+		sanitizedvideodisambiguation=" ($(echo "${videodisambiguation}" | sed -e "s%[^[:alpha:][:digit:]._()' -]% %g" -e "s/  */ /g" | sed 's/^[.]*//' | sed  's/[.]*$//g' | sed  's/^ *//g' | sed 's/ *$//g'))"
 	else
 		nfovideodisambiguation=""
 		sanitizedvideodisambiguation=""
