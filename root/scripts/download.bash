@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.55"
+	log "############################################ SCRIPT VERSION 1.1.56"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -339,12 +339,12 @@ DownloadVideos () {
 		db="IMVDb"
 		log "$artistnumber of $artisttotal :: $artistname :: IMVDB :: Aritst Link Found, using it's database for videos..."
 		imvdbcache="$(cat "/config/cache/$sanitizedartistname-$mbid-imvdb.json")"
-		imvdbids=($(echo "$imvdbcache" |  jq -r ".[] | select(.sources[] | select(.source==\"youtube\")) | .id"))
-		videocount="$(echo "$imvdbcache" | jq -r ".[] | select(.sources[] | select(.source==\"youtube\")) | .id" | wc -l)"
+		imvdbids=($(echo "$imvdbcache" |  jq -r ".[] | select(.sources[] | select(.source==\"youtube\")) | .id" | sort -u))
+		videocount="$(echo "$imvdbcache" | jq -r ".[] | select(.sources[] | select(.source==\"youtube\")) | .id" | sort -u | wc -l)"
 		for id in ${!imvdbids[@]}; do
 			currentprocess=$(( $id + 1 ))
 			imvdbid="${imvdbids[$id]}"
-			imvdbvideodata="$(echo "$imvdbcache" | jq -r ".[] | select(.id==$imvdbid) | .")"
+			imvdbvideodata="$(echo "$imvdbcache" | jq -r "unique | .[] | select(.id==$imvdbid) | .")"
 			videotitle="$(echo "$imvdbvideodata" | jq -r ".song_title")"
 			videodisambiguation=""
 			videotitlelowercase="${videotitle,,}"
@@ -415,9 +415,9 @@ DownloadVideos () {
 }
 
 VideoNFOWriter () {
-	log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
 	if [ -f "${filelocation}.mkv" ]; then
 		if [ ! -f "${filelocation}.nfo" ]; then
+			log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: NFO WRITER :: Writing NFO for ${videotitle}${nfovideodisambiguation}"
 			nfo="${filelocation}.nfo"
 			echo "<musicvideo>" >> "$nfo"
 			echo "	<title>${videotitle}${nfovideodisambiguation}</title>" >> "$nfo"
@@ -616,10 +616,10 @@ VideoDownload () {
 		destination="$LIBRARY"
 		filelocation="$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}"
 		thumbnailname="$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}"
-	fi
-	
+	fi	
+
 	if [ -f "${filelocation}.mkv" ] || [ -f "${filelocation}.mp4" ] ; then
-		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} ::  ${videotitle}${nfovideodisambiguation} already downloaded!"
+		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: already downloaded!"
 		if cat "/config/logs/download.txt" | grep -i ":: $youtubeid ::" | read; then
 			sleep 0.1
 		else
@@ -685,7 +685,7 @@ VideoDownload () {
 			-map 0 \
 			-c copy \
 			-metadata ENCODED_BY="AMVD" \
-			-metadata TITLE="${videotitle}${nfovideodisambiguation} " \
+			-metadata TITLE="${videotitle}${nfovideodisambiguation}" \
 			-metadata DATE_RELEASE="$year" \
 			-metadata DATE="$year" \
 			-metadata YEAR="$year" \
