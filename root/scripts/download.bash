@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.57"
+	log "############################################ SCRIPT VERSION 1.1.58"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -366,20 +366,6 @@ DownloadVideos () {
 				continue
 			fi
 
-			youtubedata="$(yt-dlp ${cookies} -j "$youtubeurl" 2> /dev/null)"
-		
-			if [ -z "$youtubedata" ]; then
-				log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: ERROR :: Video Unavailable ($youtubeurl)"
-				continue
-			fi
-		
-			youtubeuploaddate="$(echo "$youtubedata" | jq -r '.upload_date')"
-			if [ "$imvdbvideoyear" = "null" ]; then
-				videoyear="$(echo ${youtubeuploaddate:0:4})"
-			fi
-			youtubeaveragerating="$(echo "$youtubedata" | jq -r '.average_rating')"
-			videoalbum="$(echo "$youtubedata" | jq -r '.album')"
-			sanitizedvideodisambiguation=""
 			
 
 			VideoDownload
@@ -624,6 +610,20 @@ VideoDownload () {
 		fi
 		return
 	fi
+
+	youtubedata="$(yt-dlp ${cookies} -j "$youtubeurl" 2> /dev/null)"
+		
+	if [ -z "$youtubedata" ]; then
+		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: ERROR :: Video Unavailable ($youtubeurl)"
+		return
+	fi
+		
+	youtubeuploaddate="$(echo "$youtubedata" | jq -r '.upload_date')"
+	if [ "$imvdbvideoyear" = "null" ]; then
+		videoyear="$(echo ${youtubeuploaddate:0:4})"
+	fi
+	youtubeaveragerating="$(echo "$youtubedata" | jq -r '.average_rating')"
+	videoalbum="$(echo "$youtubedata" | jq -r '.album')"
 
 	log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with yt-dlp"
 	log "=======================START YT-DLP========================="
