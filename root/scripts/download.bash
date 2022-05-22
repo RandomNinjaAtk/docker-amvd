@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.60"
+	log "############################################ SCRIPT VERSION 1.1.61"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -637,15 +637,22 @@ VideoDownload () {
 	youtubeaveragerating="$(echo "$youtubedata" | jq -r '.average_rating')"
 	videoalbum="$(echo "$youtubedata" | jq -r '.album')"
 
+	if [ ! -d "/tmp/amvd" ]; then
+		mkdir -p /tmp/amvd
+	else
+		rm -rf /tmp/amvd
+		mkdir -p /tmp/amvd
+	fi
+
 	log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Processing ($youtubeurl)... with yt-dlp"
 	log "=======================START YT-DLP========================="
-	yt-dlp -f "$videoformat" -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" --embed-subs --sub-lang $subtitlelanguage --merge-output-format mkv --remux-video mkv --no-mtime --geo-bypass "$youtubeurl"
+	yt-dlp -f "$videoformat" -o "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}" --embed-subs --sub-lang $subtitlelanguage --merge-output-format mkv --remux-video mkv --no-mtime --geo-bypass "$youtubeurl"
 	log "========================STOP YT-DLP========================="
-	if [ -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
+	if [ -f "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" ]; then
 		log "$artistnumber of $artisttotal :: $artistname :: $db :: $currentprocess of $videocount :: DOWNLOAD :: ${videotitle}${nfovideodisambiguation} :: Complete!"
-		audiochannels="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels" | head -n 1)"
-		width="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width" | head -n 1)"
-		height="$(ffprobe -v quiet -print_format json -show_streams "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height" | head -n 1)"
+		audiochannels="$(ffprobe -v quiet -print_format json -show_streams "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"audio\") | .channels" | head -n 1)"
+		width="$(ffprobe -v quiet -print_format json -show_streams "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .width" | head -n 1)"
+		height="$(ffprobe -v quiet -print_format json -show_streams "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" | jq -r ".[] | .[] | select(.codec_type==\"video\") | .height" | head -n 1)"
 		if [[ "$width" -ge "3800" || "$height" -ge "2100" ]]; then
 			videoquality=3
 			qualitydescription="UHD"
@@ -670,14 +677,14 @@ VideoDownload () {
 		fi
 
 		if [ ! -z "$videoimage" ]; then
-			curl -s "$videoimage" -o "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+			curl -s "$videoimage" -o "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
 		fi
 
-		if [ ! -f "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" ]; then
+		if [ ! -f "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" ]; then
 			ffmpeg -y \
-				-i "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
+				-i "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" \
 				-vframes 1 -an -s 640x360 -ss 30 \
-				"$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" &> /dev/null
+				"/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" &> /dev/null
 		fi
 
 		if [ ! -z "$videodirectors" ]; then
@@ -686,11 +693,11 @@ VideoDownload () {
 		else
 			mkvdirectormetadata=""
 		fi
-		mv "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" "$destination/temp.mkv"
-		cp "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$destination/cover.jpg"
+		mv "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" "/tmp/amvd/temp.mkv"
+		cp "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "/tmp/amvd/cover.jpg"
 		log "========================START FFMPEG========================"
 		ffmpeg -y \
-			-i "$destination/temp.mkv" \
+			-i "/tmp/amvd/temp.mkv" \
 			-map 0 \
 			-c copy \
 			-metadata ENCODED_BY="AMVD" \
@@ -704,25 +711,40 @@ VideoDownload () {
 			-metadata ALBUMARTIST="$artistname" \
 			-metadata:s:v:0 title="$qualitydescription" \
 			-metadata:s:a:0 title="$audiodescription" \
-			"$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+			"/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
 		log "========================STOP FFMPEG========================="
 		
-		rm "$destination/cover.jpg"
-		rm "$destination/temp.mkv"
-		chmod $FilePermissions "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
-		chmod $FilePermissions "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
-		chown abc:abc "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
-		chown abc:abc "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+		rm "/tmp/amvd/cover.jpg"
+		rm "/tmp/amvd/temp.mkv"
 		if [ "$USEVIDEOFOLDERS" == "true" ]; then
 			if [ ! -d "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}" ]; then
 				mkdir -p "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}"
 				chmod $FolderPermissions "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}"
 				chown abc:abc "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}"
 			fi
-			mv "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}/${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" 
-			mv "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}/${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+			mv "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}/${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" 
+			mv "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}/${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+			chmod $FilePermissions "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}/${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" 
+			chmod $FilePermissions "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}/${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+			chown abc:abc "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}/${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" 
+			chown abc:abc "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}/${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+		else
+			if [ ! -d "$destination" ]; then
+				mkdir -p "$destination"
+				chmod $FolderPermissions "$destination"
+				chown abc:abc "$destination"
+			fi
+			mv "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv" 
+			mv "/tmp/amvd/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg" "$destination/${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+			chmod $FilePermissions "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+			chmod $FilePermissions "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
+			chown abc:abc "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.mkv"
+			chown abc:abc "$destination/$sanitizedartistname - ${sanitizevideotitle}${sanitizedvideodisambiguation}.jpg"
 		fi
-	
+
+		if [ -d "/tmp/amvd" ]; then
+			rm -rf /tmp/amvd
+		fi
 		# reset language
 		releaselanguage="null"
 
