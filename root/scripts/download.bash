@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.59"
+	log "############################################ SCRIPT VERSION 1.1.60"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -491,11 +491,7 @@ VideoNFOWriter () {
 				echo "	<studio/>" >> "$nfo"
 			fi
 			
-			if [ -f "${filelocation}.jpg" ]; then
-				echo "	<thumb>${thumbnailname}.jpg</thumb>" >> "$nfo"
-			else
-				echo "	<thumb/>" >> "$nfo"
-			fi
+
 
 
 			echo "	<artist>$artistname</artist>" >> "$nfo"
@@ -505,7 +501,10 @@ VideoNFOWriter () {
 					echo "	<artist>$featartist</artist>" >> "$nfo"
 				done
 			fi 
-			echo "	<musicBrainzArtistID>$mbid</musicBrainzArtistID>" >> "$nfo"
+			echo "	<albumArtistCredits>" >> "$nfo"
+			echo "		<artist>$artistname</artist>" >> "$nfo"
+			echo "		<musicBrainzArtistID>$mbid</musicBrainzArtistID>" >> "$nfo"
+			echo "	</albumArtistCredits>" >> "$nfo"
 			artistcountry="$(cat "/config/cache/$sanitizedartistname-$mbid-info.json" | jq -r ".country")"
 			if [ ! -z "$artistcountry" ]; then
 				echo "	<country>$artistcountry</country>" >> "$nfo"
@@ -513,6 +512,11 @@ VideoNFOWriter () {
 				echo "	<country/>" >> "$nfo"
 			fi
 
+			if [ -f "${filelocation}.jpg" ]; then
+				echo "	<thumb>${thumbnailname}.jpg</thumb>" >> "$nfo"
+			else
+				echo "	<thumb/>" >> "$nfo"
+			fi
 			echo "</musicvideo>" >> "$nfo"
 			tidy -w 2000 -i -m -xml "$nfo" &>/dev/null
 			chmod $FilePermissions "$nfo"
@@ -563,9 +567,7 @@ VideoDownload () {
 			artistgenre="${artistgenres[$genre]}"
 			OUT=$OUT"$artistgenre / "
 		done
-		genre="${OUT%???}"
-		genre="${genre,,}"
-		
+		genre="${OUT%???}"		
 	fi
 
 	videoFeaturedArtists="$(echo "$imvdbvideodata" | jq -r ".featured_artists[].name")"
