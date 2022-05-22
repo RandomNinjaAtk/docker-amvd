@@ -68,6 +68,7 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-v /config` | Configuration files for Lidarr. |
 | `-v /downloads-amvd` | Location of music videos, also add a volume to match the location |
 | `-v /ama` | Optional :: Map this to the AMA containers /config folder for proper usage |
+| `-v /tmp` | Optional :: Downloads are downloaded to this temporary location before moving to final library/folder destination |
 | `-e updateScripts="true"` | true = Enabled :: Updates scripts on startup :: Optional |
 | `-e AUTOSTART="true"` | true = Enabled :: Runs script automatically on startup |
 | `-e SCRIPTINTERVAL=1h` | #s or #m or #h or #d :: s = seconds, m = minutes, h = hours, d = days :: Amount of time between each script run, when AUTOSTART is enabled |
@@ -96,6 +97,7 @@ docker create \
   -v /path/to/config/files:/config \
   -v /path/to/music-videos:/downloads-amvd \
   -v /path/to/ama/config:/ama \
+  -v /path/to/tmp:/tmp \
   -e PUID=1000 \
   -e PGID=1000 \
   -e AUTOSTART=true \
@@ -129,6 +131,7 @@ services:
       - /path/to/config/files:/config
       - /path/to/music-videos:/downloads-amvd
       - /path/to/ama/config:/ama
+      - /path/to/tmp:/tmp
     environment:
       - PUID=1000
       - PGID=1000
