@@ -13,7 +13,7 @@ Configuration () {
 	log ""
 	sleep 2
 	log "############################################ $TITLE"
-	log "############################################ SCRIPT VERSION 1.1.58"
+	log "############################################ SCRIPT VERSION 1.1.59"
 	log "############################################ DOCKER VERSION $VERSION"
 	log "############################################ CONFIGURATION VERIFICATION"
 	error=0
@@ -457,7 +457,47 @@ VideoNFOWriter () {
 			else
 				echo "	<year/>" >> "$nfo"
 			fi
-			echo "	<studio/>" >> "$nfo"
+			
+			videoContributersData=$(echo "$imvdbvideodata" | jq -r ".credits.crew[]")
+			videoContributersids=($(echo "$imvdbvideodata" | jq -r ".credits.crew[].entity_id"))
+			if [ ! -z "$videoContributersids" ]; then
+				for id in ${!videoContributersids[@]}; do
+					videoContributersid="${videoContributersids[$id]}"
+					VideoContributerName="$(echo $videoContributersData | jq -r "select(.entity_id==$videoContributersid) |.entity_name")"
+					VideoContributerRole="$(echo $videoContributersData | jq -r "select(.entity_id==$videoContributersid) |.position_name")"
+					VideoContributerPositionId="$(echo $videoContributersData | jq -r "select(.entity_id==$videoContributersid) |.position_id")"
+					VideoContributerPositionCode="$(echo $videoContributersData | jq -r "select(.entity_id==$videoContributersid) |.position_code")"
+					if echo "$VideoContributerPositionCode" | grep "label" | read; then
+						echo "	<studio>$VideoContributerName</studio>" >> "$nfo"
+						continue
+					else
+						continue
+					fi
+					# Disable extended info because apps do not support it
+					#if echo "$VideoContributerPositionCode" | grep "dir" | read; then
+					#	continue
+					#fi
+					#echo "	<actor>" >> "$nfo"
+					#echo "		<name>$VideoContributerName</name>" >> "$nfo"
+					#echo "		<role>$VideoContributerRole</role>" >> "$nfo"
+					#echo "		<order>$VideoContributerPositionId</order>" >> "$nfo"
+					#echo "		<thumb/>" >> "$nfo"
+					#echo "	</actor>" >> "$nfo"
+				done
+			fi
+			if cat "$nfo" | grep "<studio>" | read; then
+				sleep 0.01
+			else
+				echo "	<studio/>" >> "$nfo"
+			fi
+			
+			if [ -f "${filelocation}.jpg" ]; then
+				echo "	<thumb>${thumbnailname}.jpg</thumb>" >> "$nfo"
+			else
+				echo "	<thumb/>" >> "$nfo"
+			fi
+
+
 			echo "	<artist>$artistname</artist>" >> "$nfo"
 			if [ ! -z "$videoFeaturedArtists" ]; then
 				for fartist in ${!videoFeaturedArtists[@]}; do
@@ -472,37 +512,7 @@ VideoNFOWriter () {
 			else
 				echo "	<country/>" >> "$nfo"
 			fi
-			if [ -f "${filelocation}.jpg" ]; then
-				echo "	<thumb>${thumbnailname}.jpg</thumb>" >> "$nfo"
-			else
-				echo "	<thumb/>" >> "$nfo"
-			fi
-			
-			videoContributersData=$(echo "$imvdbvideodata" | jq -r ".credits.crew[]")
-			videoContributersids=($(echo "$imvdbvideodata" | jq -r ".credits.crew[].entity_id"))
-			if [ ! -z "$videoContributersids" ]; then
-				for id in ${!videoContributersids[@]}; do
-					videoContributersid="${videoContributersids[$id]}"
-					VideoContributerName="$(echo $videoContributersData | jq -r "select(.entity_id==$videoContributersid) |.entity_name")"
-					VideoContributerRole="$(echo $videoContributersData | jq -r "select(.entity_id==$videoContributersid) |.position_name")"
-					VideoContributerPositionId="$(echo $videoContributersData | jq -r "select(.entity_id==$videoContributersid) |.position_id")"
-					VideoContributerPositionCode="$(echo $videoContributersData | jq -r "select(.entity_id==$videoContributersid) |.position_code")"
-					if echo "$VideoContributerPositionCode" | grep "label" | read; then
-						echo "	<studio>$VideoContributerName</studio>" >> "$nfo"
-						continue
-					fi
-					if echo "$VideoContributerPositionCode" | grep "dir" | read; then
-						continue
-					fi
-					echo "	<actor>" >> "$nfo"
-					echo "		<name>$VideoContributerName</name>" >> "$nfo"
-					echo "		<role>$VideoContributerRole</role>" >> "$nfo"
-					echo "		<order>$VideoContributerPositionId</order>" >> "$nfo"
-					echo "		<thumb/>" >> "$nfo"
-					echo "	</actor>" >> "$nfo"
-				done
-			fi
-			
+
 			echo "</musicvideo>" >> "$nfo"
 			tidy -w 2000 -i -m -xml "$nfo" &>/dev/null
 			chmod $FilePermissions "$nfo"
